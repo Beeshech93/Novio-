@@ -1,7 +1,7 @@
 'use client';
 import { FormEvent, useState } from 'react';
 import { DashShell } from '@/components/DashShell';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 
 const TASKS: [string, string][] = [
   ['campaign_pack', 'Paquete de campaña'], ['promotion', 'Promoción'], ['whatsapp_message', 'Mensaje de WhatsApp'],
@@ -30,17 +30,17 @@ export default function Asistente() {
       const r = await api<{ result: Record<string, string> }>('/ai/generate', { method: 'POST', body: JSON.stringify({ task, prompt }) });
       setResult(r.result); setDemo(false);
     } catch (err) {
-      const m = (err as Error).message;
-      if (/fetch|Failed|Unauthorized/i.test(m)) { setDemo(true); setResult(DEMO); } else setError(m);
+      const e = err as ApiError;
+      if (e.unavailable || e.status === 401) { setDemo(true); setResult(DEMO); } else setError(e.message);
     } finally { setBusy(false); }
   }
   async function analyze() {
     setBusy(true); setError('');
     try { setInsights(await api('/ai/insights', { method: 'POST' })); }
     catch (err) {
-      const m = (err as Error).message;
-      if (/fetch|Failed|Unauthorized/i.test(m)) { setDemo(true); setInsights({ summary: 'Ejemplo: tus ventas crecieron esta semana y el corte clásico es tu servicio más pedido.', actions: ['Lanza un paquete corte + barba los martes, el día más flojo.', 'Escribe a los clientes que no vienen desde hace 60 días con un cupón.', 'Pide reseñas a quienes completaron una cita esta semana.'] }); }
-      else setError(m);
+      const e = err as ApiError;
+      if (e.unavailable || e.status === 401) { setDemo(true); setInsights({ summary: 'Ejemplo: tus ventas crecieron esta semana y el corte clásico es tu servicio más pedido.', actions: ['Lanza un paquete corte + barba los martes, el día más flojo.', 'Escribe a los clientes que no vienen desde hace 60 días con un cupón.', 'Pide reseñas a quienes completaron una cita esta semana.'] }); }
+      else setError(e.message);
     } finally { setBusy(false); }
   }
   const copy = (k: string, v: string) => { navigator.clipboard?.writeText(v).then(() => { setCopied(k); setTimeout(() => setCopied(''), 1500); }); };
