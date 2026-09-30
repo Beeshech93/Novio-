@@ -19,8 +19,9 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError('No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.', 0, true);
   }
   if (!res.ok) {
-    if (res.status >= 500) throw new ApiError('El servicio no está disponible por ahora. Inténtalo de nuevo en unos minutos.', res.status);
     const body = await res.json().catch(() => ({}));
+    // 503 from our own API carries a deliberate, user-safe message (e.g. "Nuvio AI no está conectada"); other 5xx are generic.
+    if (res.status >= 500) throw new ApiError(res.status === 503 && typeof body.message === 'string' ? body.message : 'El servicio no está disponible por ahora. Inténtalo de nuevo en unos minutos.', res.status);
     const msg = Array.isArray(body.message) ? body.message.join(', ') : body.message;
     throw new ApiError(msg ?? 'Algo salió mal', res.status);
   }

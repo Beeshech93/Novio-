@@ -56,3 +56,26 @@ describe('RolesGuard', () => {
     expect(run({ permission: 'products.write' }, { role: 'MANAGER', permissions: [] })).toBe(true);
   });
 });
+
+describe('AuthGuard platform-admin 2FA requirement', () => {
+  const run = async (user: any, key?: string) => {
+    const saved = process.env.TWOFA_ENCRYPTION_KEY;
+    if (key) process.env.TWOFA_ENCRYPTION_KEY = key; else delete process.env.TWOFA_ENCRYPTION_KEY;
+    try {
+      const prisma: any = { user: { findFirst: jest.fn().mockResolvedValue(user) } };
+      const guard = new AuthGuard({ verifyAsync: jest.fn().mockResolvedValue({ sub: 'u1' }) } as any, prisma, reflector({ platformAdmin: true }));
+      return await guard.canActivate(ctx({ headers: { authorization: 'Bearer t' } }));
+    } finally { if (saved) process.env.TWOFA_ENCRYPTION_KEY = saved; else delete process.env.TWOFA_ENCRYPTION_KEY; }
+  };
+  const admin = (totpEnabled: boolean) => ({ id: 'u1', platformRole: 'SUPER_ADMIN', totpEnabled });
+  const KEY = 'a'.repeat(64);
+
+  it('blocks an admin without 2FA when the server supports 2FA', async () => {
+    await expect(run(admin(false), KEY)).rejects.toThrow('ADMIN_2FA_REQUIRED');
+  });
+  it('lets an admin with 2FA through', async () => expect(await run(admin(true), KEY)).toBe(true));
+  it('does not lock the admin out when 2FA cannot be configured on the server', async () => expect(await run(admin(false))).toBe(true));
+  it('still rejects non-admins', async () => {
+    await expect(run({ id: 'u2', platformRole: 'USER', totpEnabled: true }, KEY)).rejects.toBeInstanceOf(ForbiddenException);
+  });
+});

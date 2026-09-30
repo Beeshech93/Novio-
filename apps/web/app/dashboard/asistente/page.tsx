@@ -22,24 +22,25 @@ export default function Asistente() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [demo, setDemo] = useState(false);
+  const [notConnected, setNotConnected] = useState('');
   const [copied, setCopied] = useState('');
 
   async function run(e: FormEvent) {
-    e.preventDefault(); setBusy(true); setError(''); setResult(null);
+    e.preventDefault(); setBusy(true); setError(''); setNotConnected(''); setResult(null);
     try {
       const r = await api<{ result: Record<string, string> }>('/ai/generate', { method: 'POST', body: JSON.stringify({ task, prompt }) });
       setResult(r.result); setDemo(false);
     } catch (err) {
       const e = err as ApiError;
-      if (e.unavailable || e.status === 401) { setDemo(true); setResult(DEMO); } else setError(e.message);
+      if (e.status === 503) setNotConnected(e.message); else if (e.unavailable || e.status === 401) { setDemo(true); setResult(DEMO); } else setError(e.message);
     } finally { setBusy(false); }
   }
   async function analyze() {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setNotConnected('');
     try { setInsights(await api('/ai/insights', { method: 'POST' })); }
     catch (err) {
       const e = err as ApiError;
-      if (e.unavailable || e.status === 401) { setDemo(true); setInsights({ summary: 'Ejemplo: tus ventas crecieron esta semana y el corte clásico es tu servicio más pedido.', actions: ['Lanza un paquete corte + barba los martes, el día más flojo.', 'Escribe a los clientes que no vienen desde hace 60 días con un cupón.', 'Pide reseñas a quienes completaron una cita esta semana.'] }); }
+      if (e.status === 503) setNotConnected(e.message); else if (e.unavailable || e.status === 401) { setDemo(true); setInsights({ summary: 'Ejemplo: tus ventas crecieron esta semana y el corte clásico es tu servicio más pedido.', actions: ['Lanza un paquete corte + barba los martes, el día más flojo.', 'Escribe a los clientes que no vienen desde hace 60 días con un cupón.', 'Pide reseñas a quienes completaron una cita esta semana.'] }); }
       else setError(e.message);
     } finally { setBusy(false); }
   }
@@ -50,6 +51,12 @@ export default function Asistente() {
       <h1 className="text-2xl font-bold">Nuvio AI ✨</h1>
       <p className="text-slate-600">Cuéntame qué quieres lograr y creo el texto por ti.</p>
       {demo && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Modo demostración: son resultados de ejemplo, la IA aún no está conectada.</p>}
+      {notConnected && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <p className="font-semibold">Nuvio AI todavía no está activada</p>
+          <p className="mt-1">Para usarla, la persona que administra Nuvio debe conectar la clave de la API de Claude en el servidor. Cuando esté lista, podrás generar textos y analizar tus ventas aquí.</p>
+        </div>
+      )}
       {error && <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <form onSubmit={run} className="card mt-4 space-y-3">

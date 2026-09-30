@@ -22,13 +22,14 @@ const DEMO_P: Plan[] = [
 
 export default function Admin() {
   const [m, setM] = useState<Metrics>(); const [biz, setBiz] = useState<Biz[]>([]); const [plans, setPlans] = useState<Plan[]>([]);
-  const [demo, setDemo] = useState(false); const [denied, setDenied] = useState(false); const [msg, setMsg] = useState('');
+  const [demo, setDemo] = useState(false); const [denied, setDenied] = useState<'no' | '2fa' | false>(false); const [msg, setMsg] = useState('');
 
   const load = useCallback(() => {
     Promise.all([api<Metrics>('/admin/metrics'), api<{ items: Biz[] }>('/admin/businesses'), api<Plan[]>('/admin/plans')])
       .then(([a, b, c]) => { setM(a); setBiz(b.items); setPlans(c); setDemo(false); })
       .catch((e: Error) => {
-        if (/Forbidden|Unauthorized/i.test(e.message)) return setDenied(true); // real API said no: never fall back to demo data
+        if (/ADMIN_2FA_REQUIRED/.test(e.message)) return setDenied('2fa');
+        if (/Forbidden|Unauthorized/i.test(e.message)) return setDenied('no'); // real API said no: never fall back to demo data
         setDemo(true); setM(DEMO_M); setBiz(DEMO_B); setPlans(DEMO_P);
       });
   }, []);
@@ -43,6 +44,12 @@ export default function Admin() {
   const assign = (b: Biz, slug: string) => run(() => api(`/admin/businesses/${b.id}/subscription`, { method: 'POST', body: JSON.stringify({ planSlug: slug, interval: 'MONTHLY' }) }), () => setMsg('Demostración: asignación simulada.'));
   const setPrice = (p: Plan, price: number) => run(() => api(`/admin/plans/${p.id}`, { method: 'PATCH', body: JSON.stringify({ price }) }), () => setPlans((ps) => ps.map((x) => (x.id === p.id ? { ...x, price } : x))));
 
+  if (denied === '2fa') return (
+    <main className="mx-auto max-w-md p-10"><Logo />
+      <div className="card mt-8 space-y-3"><p className="font-semibold">Activa la verificación en dos pasos</p>
+        <p className="text-sm text-slate-600">Por seguridad, el panel de administración exige 2FA. Actívalo en tu cuenta y vuelve a entrar.</p>
+        <a href="/dashboard/seguridad" className="btn btn-primary w-full">Ir a Seguridad</a></div></main>
+  );
   if (denied) return <main className="mx-auto max-w-md p-10"><Logo /><p className="card mt-8">No tienes acceso a esta sección.</p></main>;
   if (!m) return <p className="p-8 text-slate-500">Cargando…</p>;
 

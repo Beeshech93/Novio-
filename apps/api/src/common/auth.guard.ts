@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { PLATFORM_ADMIN_KEY, PUBLIC_KEY } from './decorators';
+import { twoFaConfigured } from '../auth/totp';
 import { AuthedRequest } from './tenant';
 
 export const COOKIE_NAME = 'nuvio_token';
@@ -42,6 +43,9 @@ export class AuthGuard implements CanActivate {
 
     if (this.reflector.getAllAndOverride<boolean>(PLATFORM_ADMIN_KEY, targets)) {
       if (user.platformRole !== 'SUPER_ADMIN') throw new ForbiddenException();
+      // Platform admins hold the keys to every business: require a second factor whenever the server can enforce it
+      // (TWOFA_ENCRYPTION_KEY set). Without that key 2FA can't be enabled, so we don't lock the admin out.
+      if (twoFaConfigured() && !user.totpEnabled) throw new ForbiddenException('ADMIN_2FA_REQUIRED');
       return true;
     }
 
