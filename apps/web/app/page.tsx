@@ -44,6 +44,15 @@ export default function Home() {
         ))}
       </section>
 
+      <section className="pb-16 text-center">
+        <h2 className="text-2xl font-bold tracking-tight">Una página para cada tipo de negocio</h2>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {['restaurante', 'barberia', 'salon', 'tienda', 'taller', 'veterinaria', 'gimnasio', 'profesional'].map((t) => (
+            <Link key={t} href={`/demo/${t}`} className="btn capitalize">{t}</Link>
+          ))}
+        </div>
+      </section>
+
       <section className="pb-20 text-center">
         <h2 className="text-3xl font-bold tracking-tight">Tu negocio. Una plataforma. Más crecimiento.</h2>
       </section>

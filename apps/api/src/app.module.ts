@@ -9,6 +9,8 @@ import { BILLING_PROVIDERS, BillingProvider } from './subscriptions/billing-prov
 import { MockBillingProvider } from './subscriptions/mock-billing.provider';
 import { SubscriptionsController } from './subscriptions/subscriptions.controller';
 import { SubscriptionsService } from './subscriptions/subscriptions.service';
+import { WebsitesController } from './websites/websites.controller';
+import { WebsitesService } from './websites/websites.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -42,7 +44,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController],
   providers: [
     AuthService,
     ProductsService,
@@ -50,6 +52,7 @@ import { PrismaModule } from './prisma/prisma.module';
     OrdersService,
     PaymentsService,
     SubscriptionsService,
+    WebsitesService,
     {
       provide: BILLING_PROVIDERS,
       // Connect a real billing processor here (Stripe / Mercado Pago / Conekta) and set BILLING_PROVIDER.
