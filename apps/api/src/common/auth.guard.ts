@@ -26,15 +26,18 @@ export class AuthGuard implements CanActivate {
     const token = bearer ?? req.cookies?.[COOKIE_NAME];
     if (!token) throw new UnauthorizedException();
 
-    let userId: string;
+    let userId: string, issuedAt = 0;
     try {
-      userId = (await this.jwt.verifyAsync<{ sub: string }>(token)).sub;
+      const payload = await this.jwt.verifyAsync<{ sub: string; iat?: number }>(token);
+      userId = payload.sub; issuedAt = (payload.iat ?? 0) * 1000;
     } catch {
       throw new UnauthorizedException();
     }
 
     const user = await this.prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
     if (!user) throw new UnauthorizedException();
+    // Password reset revokes all earlier sessions.
+    if (user.passwordChangedAt && issuedAt < user.passwordChangedAt.getTime() - 1000) throw new UnauthorizedException();
 
     if (this.reflector.getAllAndOverride<boolean>(PLATFORM_ADMIN_KEY, targets)) {
       if (user.platformRole !== 'SUPER_ADMIN') throw new ForbiddenException();

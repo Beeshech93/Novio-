@@ -40,6 +40,7 @@ CREATE TABLE "users" (
     "passwordHash" TEXT NOT NULL,
     "platformRole" "PlatformRole" NOT NULL DEFAULT 'USER',
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "passwordChangedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
@@ -487,6 +488,19 @@ CREATE TABLE "automation_runs" (
     CONSTRAINT "automation_runs_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "auth_tokens" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "kind" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "auth_tokens_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -604,6 +618,12 @@ CREATE INDEX "automation_runs_businessId_idx" ON "automation_runs"("businessId")
 -- CreateIndex
 CREATE UNIQUE INDEX "automation_runs_automationId_entityKey_key" ON "automation_runs"("automationId", "entityKey");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "auth_tokens_tokenHash_key" ON "auth_tokens"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "auth_tokens_userId_kind_idx" ON "auth_tokens"("userId", "kind");
+
 -- AddForeignKey
 ALTER TABLE "business_members" ADD CONSTRAINT "business_members_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -711,4 +731,7 @@ ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_businessId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "coupons" ADD CONSTRAINT "coupons_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "auth_tokens" ADD CONSTRAINT "auth_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

@@ -13,7 +13,7 @@ SaaS multi-tenant todo-en-uno para pequeños negocios. Monorepo: `apps/api` (Nes
 - Migraciones: aún no generadas (requiere Postgres): `npm run prisma:migrate -w @nuvio/api`
 - PostgreSQL RLS: se añadirá en una migración SQL junto a Fase 2 (hoy el aislamiento es a nivel aplicación)
 - Tablas `roles`/`permissions` de la spec: se modelaron como enum `MemberRole` + `permissions[]` en `business_members`
-- Verificación de email, recuperación de contraseña, 2FA, Redis/BullMQ: pendientes
+- 2FA, Redis/BullMQ: pendientes
 
 ## Desarrollo
 ```bash
@@ -37,4 +37,4 @@ Nada de esto está conectado; lo configura el administrador:
 6. **API en producción**: hosting para `apps/api` y `NEXT_PUBLIC_API_URL` en Vercel.
 
 ## Fases
-1 Core ✅ · 2 Negocio ✅ · 3 Ventas ✅ · 4 Suscripciones ✅ · 5 Sitio público ✅ · 6 Citas ✅ · 9 Nuvio AI ✅ (textos y análisis con Claude, límite diario por negocio) · 8 Crecimiento ✅ (cupones, campañas a clientes con consentimiento, automatizaciones trigger→condición→acción, analytics) · 7 Comunicación ✅ (sin Redis/BullMQ: los recordatorios usan un cron idempotente) (registro crea prueba de 14 días; funciones por plan validadas en backend con HTTP 402) · 5+ pendientes.
+1 Core ✅ · 2 Negocio ✅ · 3 Ventas ✅ · 4 Suscripciones ✅ · 5 Sitio público ✅ · 6 Citas ✅ · Cuenta ✅ (verificación de correo y recuperación de contraseña con tokens de un solo uso, hasheados; un reset cierra las demás sesiones) · 9 Nuvio AI ✅ (textos y análisis con Claude, límite diario por negocio) · 8 Crecimiento ✅ (cupones, campañas a clientes con consentimiento, automatizaciones trigger→condición→acción, analytics) · 7 Comunicación ✅ (sin Redis/BullMQ: los recordatorios usan un cron idempotente) (registro crea prueba de 14 días; funciones por plan validadas en backend con HTTP 402) · 5+ pendientes.

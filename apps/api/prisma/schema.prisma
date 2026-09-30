@@ -81,17 +81,20 @@ enum ItemStatus {
 }
 
 model User {
-  id            String           @id @default(uuid()) @db.Uuid
-  name          String
-  email         String           @unique
-  phone         String?
-  passwordHash  String
-  platformRole  PlatformRole     @default(USER)
-  emailVerified Boolean          @default(false)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  deletedAt     DateTime?
-  memberships   BusinessMember[]
+  id                String           @id @default(uuid()) @db.Uuid
+  name              String
+  email             String           @unique
+  phone             String?
+  passwordHash      String
+  platformRole      PlatformRole     @default(USER)
+  emailVerified     Boolean          @default(false)
+  /// Tokens issued before this instant are rejected (set on password reset).
+  passwordChangedAt DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  memberships       BusinessMember[]
+  authTokens        AuthToken[]
 
   @@map("users")
 }
@@ -610,4 +613,20 @@ model AutomationRun {
   @@unique([automationId, entityKey])
   @@index([businessId])
   @@map("automation_runs")
+}
+
+model AuthToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  /// 'verify_email' | 'password_reset'
+  kind      String
+  /// SHA-256 of the token; the raw token only ever exists in the email link.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind])
+  @@map("auth_tokens")
 }

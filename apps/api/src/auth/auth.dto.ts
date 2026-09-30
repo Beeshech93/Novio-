@@ -24,3 +24,14 @@ export class LoginDto {
   @IsEmail() email: string;
   @IsString() @MaxLength(72) password: string;
 }
+
+export class TokenDto {
+  @IsString() @MinLength(20) @MaxLength(100) token: string;
+}
+export class ForgotDto {
+  @IsEmail() email: string;
+}
+export class ResetDto {
+  @IsString() @MinLength(20) @MaxLength(100) token: string;
+  @IsString() @MinLength(8) @MaxLength(72) password: string;
+}

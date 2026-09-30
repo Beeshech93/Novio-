@@ -31,6 +31,7 @@ export default function Login() {
         <input name="password" type="password" required placeholder="Contraseña" className="input" />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button disabled={busy} className="btn btn-primary w-full">{busy ? 'Entrando…' : 'Entrar'}</button>
+        <p className="text-center text-sm"><Link href="/olvide-contrasena" className="font-semibold text-brand">¿Olvidaste tu contraseña?</Link></p>
         <p className="text-center text-sm text-slate-600">¿Sin cuenta? <Link href="/registro" className="font-semibold text-brand">Crea tu negocio</Link></p>
       </form>
     </main>
