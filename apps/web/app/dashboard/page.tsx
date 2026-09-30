@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   return (
     <DashShell>
-      <h1 className="text-2xl font-bold">Hola, {me.name} 👋</h1>
+      <h1 className="text-2xl font-bold">Hola, {me.name}</h1>
       <p className="text-slate-600">{me.businesses[0]?.name}</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(([label, value]) => (
