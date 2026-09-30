@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { DashShell } from '@/components/DashShell';
 import { api } from '@/lib/api';
 
-interface Customer { id: string; name: string; email: string | null; phone: string | null; totalSpent: string; ordersCount: number; tags: { tag: string }[] }
+interface Customer { id: string; name: string; email: string | null; phone: string | null; totalSpent: string; ordersCount: number; marketingOptIn?: boolean; tags: { tag: string }[] }
 
 export default function Clientes() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function Clientes() {
     setError('');
     try {
       await api('/customers', { method: 'POST', body: JSON.stringify({
-        name: f.get('name'), email: f.get('email') || undefined, phone: f.get('phone') || undefined, tags,
+        name: f.get('name'), email: f.get('email') || undefined, phone: f.get('phone') || undefined, tags, marketingOptIn: f.get('optin') === 'on',
       }) });
       e.currentTarget.reset(); load();
     } catch (err) { setError((err as Error).message); }
@@ -42,6 +42,7 @@ export default function Clientes() {
         <input name="email" type="email" placeholder="Correo" className="input" />
         <input name="phone" placeholder="Teléfono" className="input" />
         <input name="tags" placeholder="Etiquetas (vip, frecuente)" className="input" />
+        <label className="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" name="optin" /> El cliente aceptó recibir promociones por WhatsApp/correo</label>
         <button className="btn btn-primary sm:col-span-4">Agregar cliente</button>
       </form>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
@@ -53,15 +54,16 @@ export default function Clientes() {
       </div>
       <div className="card mt-4 overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-slate-500"><tr><th className="p-3">Nombre</th><th>Contacto</th><th>Compras</th><th>Etiquetas</th></tr></thead>
+          <thead className="border-b border-slate-200 text-slate-500"><tr><th className="p-3">Nombre</th><th>Contacto</th><th>Compras</th><th>Etiquetas</th><th>Promociones</th></tr></thead>
           <tbody>
             {items.map((c) => (
               <tr key={c.id} className="border-b border-slate-100">
                 <td className="p-3 font-medium">{c.name}</td><td>{c.email ?? c.phone ?? '—'}</td><td>{c.ordersCount}</td>
                 <td>{c.tags.map((t) => <span key={t.tag} className="mr-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs text-brand">{t.tag}</span>)}</td>
+                <td><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={!!c.marketingOptIn} onChange={async (e) => { try { await api(`/customers/${c.id}`, { method: 'PATCH', body: JSON.stringify({ marketingOptIn: e.target.checked }) }); load(); } catch (err) { setError((err as Error).message); } }} />{c.marketingOptIn ? 'Sí' : 'No'}</label></td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-slate-500">Aún no hay clientes.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-slate-500">Aún no hay clientes.</td></tr>}
           </tbody>
         </table>
       </div>

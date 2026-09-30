@@ -1,6 +1,7 @@
 'use client';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { DashShell } from '@/components/DashShell';
+import { MarketingExtras } from '@/components/MarketingExtras';
 import { api } from '@/lib/api';
 
 interface Coupon { id: string; code: string; kind: 'PERCENT' | 'FIXED'; value: string | number; usedCount: number; maxUses: number | null; active: boolean }
@@ -67,6 +68,7 @@ export default function Marketing() {
           </tbody>
         </table>
       </div>
+      <MarketingExtras />
     </DashShell>
   );
 }
