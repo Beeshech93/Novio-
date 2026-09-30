@@ -1,11 +1,33 @@
+# Local development stack:  docker compose up -d --build
+# Postgres + Redis are always started; api/web are under the "app" profile:  docker compose --profile app up --build
 services:
   postgres:
     image: postgres:16
     environment: { POSTGRES_USER: nuvio, POSTGRES_PASSWORD: nuvio, POSTGRES_DB: nuvio }
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U nuvio"], interval: 5s, timeout: 3s, retries: 10 }
   redis:
     image: redis:7
     ports: ["6379:6379"]
+  api:
+    profiles: ["app"]
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://nuvio:nuvio@postgres:5432/nuvio
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      WEB_ORIGIN: http://localhost:3000
+      RUN_MIGRATIONS: "1"
+    ports: ["4000:4000"]
+    depends_on: { postgres: { condition: service_healthy } }
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args: { NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1 }
+    ports: ["3000:3000"]
+    depends_on: [api]
 volumes:
   pgdata:

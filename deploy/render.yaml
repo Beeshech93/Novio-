@@ -1,0 +1,16 @@
+# Render blueprint for the API (Docker). Import from the Render dashboard: New > Blueprint.
+# Secrets marked sync:false are entered by hand in the dashboard — never commit them.
+services:
+  - type: web
+    name: nuvio-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    envVars:
+      - { key: NODE_ENV, value: production }
+      - { key: RUN_MIGRATIONS, value: "1" }
+      - { key: DATABASE_URL, sync: false }
+      - { key: JWT_SECRET, sync: false }
+      - { key: WEB_ORIGIN, sync: false }
+      - { key: CRON_SECRET, sync: false }
