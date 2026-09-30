@@ -13,6 +13,12 @@ import { CustomersController } from './customers/customers.controller';
 import { CustomersService } from './customers/customers.service';
 import { ProductsController } from './products/products.controller';
 import { ProductsService } from './products/products.service';
+import { OrdersController } from './orders/orders.controller';
+import { OrdersService } from './orders/orders.service';
+import { PAYMENT_PROVIDERS, PaymentProvider } from './payments/payment-provider';
+import { MockPaymentProvider } from './payments/mock.provider';
+import { PaymentsController } from './payments/payments.controller';
+import { PaymentsService } from './payments/payments.service';
 import { PlansController } from './plans/plans.controller';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -30,11 +36,24 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController],
   providers: [
     AuthService,
     ProductsService,
     CustomersService,
+    OrdersService,
+    PaymentsService,
+    {
+      provide: PAYMENT_PROVIDERS,
+      // Real processors get registered here. The mock (dev/test only) is never available in production.
+      useFactory: () => {
+        const providers = new Map<string, PaymentProvider>();
+        if (process.env.NODE_ENV !== 'production') {
+          providers.set('mock', new MockPaymentProvider(process.env.PAYMENT_WEBHOOK_SECRET ?? 'dev-only-secret'));
+        }
+        return providers;
+      },
+    },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
