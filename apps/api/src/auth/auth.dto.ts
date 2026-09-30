@@ -35,3 +35,15 @@ export class ResetDto {
   @IsString() @MinLength(20) @MaxLength(100) token: string;
   @IsString() @MinLength(8) @MaxLength(72) password: string;
 }
+
+export class CodeDto {
+  @IsString() @MinLength(6) @MaxLength(20) code: string;
+}
+export class TwoFaLoginDto {
+  @IsString() @MinLength(20) @MaxLength(2000) challenge: string;
+  @IsString() @MinLength(6) @MaxLength(20) code: string;
+}
+export class DisableTwoFaDto {
+  @IsString() @MaxLength(72) password: string;
+  @IsString() @MinLength(6) @MaxLength(20) code: string;
+}

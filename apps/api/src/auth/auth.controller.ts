@@ -5,8 +5,9 @@ import type { Response } from 'express';
 import { COOKIE_NAME } from '../common/auth.guard';
 import { Public, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
-import { ForgotDto, LoginDto, RegisterDto, ResetDto, TokenDto } from './auth.dto';
+import { CodeDto, DisableTwoFaDto, ForgotDto, LoginDto, TwoFaLoginDto, RegisterDto, ResetDto, TokenDto } from './auth.dto';
 import { AuthService } from './auth.service';
+import { TwoFactorService } from './two-factor.service';
 
 const cookieOpts = {
   httpOnly: true,
@@ -19,7 +20,7 @@ const cookieOpts = {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private twoFactor: TwoFactorService) {}
 
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -35,7 +36,9 @@ export class AuthController {
   @HttpCode(200)
   @Post('login')
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { token, ...rest } = await this.auth.login(dto);
+    const result = await this.auth.login(dto);
+    if (result.twoFactorRequired) return result; // no session yet: the client must call /auth/2fa/login
+    const { twoFactorRequired: _t, token, ...rest } = result;
     res.cookie(COOKIE_NAME, token, cookieOpts);
     return { ...rest, token };
   }
@@ -62,4 +65,21 @@ export class AuthController {
 
   @Public() @Throttle({ default: { limit: 5, ttl: 60_000 } }) @HttpCode(204) @Post('reset-password')
   async reset(@Body() dto: ResetDto) { await this.auth.resetPassword(dto.token, dto.password); }
+
+  @Public() @Throttle({ default: { limit: 10, ttl: 60_000 } }) @HttpCode(200) @Post('2fa/login')
+  async twoFaLogin(@Body() dto: TwoFaLoginDto, @Res({ passthrough: true }) res: Response) {
+    const userId = await this.twoFactor.completeLogin(dto.challenge, dto.code);
+    const { token, user } = await this.auth.sessionFor(userId);
+    res.cookie(COOKIE_NAME, token, cookieOpts);
+    return { user, token };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) @HttpCode(200) @Post('2fa/setup')
+  setup(@Tenant() t: TenantContext) { return this.twoFactor.setup(t.userId); }
+
+  @Throttle({ default: { limit: 10, ttl: 60_000 } }) @HttpCode(200) @Post('2fa/enable')
+  enable(@Tenant() t: TenantContext, @Body() dto: CodeDto) { return this.twoFactor.enable(t.userId, dto.code); }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) @HttpCode(204) @Post('2fa/disable')
+  async disable(@Tenant() t: TenantContext, @Body() dto: DisableTwoFaDto) { await this.twoFactor.disable(t.userId, dto.password, dto.code); }
 }

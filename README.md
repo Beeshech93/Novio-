@@ -13,7 +13,7 @@ SaaS multi-tenant todo-en-uno para pequeños negocios. Monorepo: `apps/api` (Nes
 - Migraciones: aún no generadas (requiere Postgres): `npm run prisma:migrate -w @nuvio/api`
 - PostgreSQL RLS: se añadirá en una migración SQL junto a Fase 2 (hoy el aislamiento es a nivel aplicación)
 - Tablas `roles`/`permissions` de la spec: se modelaron como enum `MemberRole` + `permissions[]` en `business_members`
-- 2FA, Redis/BullMQ: pendientes
+- Redis/BullMQ: pendiente
 
 ## Desarrollo
 ```bash
@@ -35,7 +35,8 @@ Nada de esto está conectado; lo configura el administrador:
 4. **Mensajería (Fase 7)**: correo con Resend (`RESEND_API_KEY`, `EMAIL_FROM`) y WhatsApp Business Cloud API oficial de Meta (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`; plantillas `nuvio_*` aprobadas en Meta, idioma es_MX). Webhook de Meta: `/api/v1/webhooks/whatsapp`. Recordatorios y automatizaciones por inactividad: un programador externo (Vercel Cron, GitHub Actions…) llama `POST /api/v1/internal/cron/reminders` con `x-cron-secret: $CRON_SECRET` cada 15–60 min. Sin claves, en desarrollo solo se registra en consola y en producción los envíos quedan como `failed` en la tabla `notifications`.
 5. **Nuvio AI (Fase 9)**: define `ANTHROPIC_API_KEY` (opcional `AI_MODEL`, `AI_DAILY_LIMIT`). Sin clave, la API responde 503 y la pantalla muestra ejemplos.
 6. **Subida de imágenes**: bucket S3-compatible (`S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_BASE_URL`; `S3_ENDPOINT` para R2/MinIO). Configura CORS del bucket para permitir `POST` desde tu dominio web y lectura pública de los archivos. Solo JPG/PNG/WebP/GIF de hasta 5 MB (SVG bloqueado).
-7. **API en producción**: hosting para `apps/api` y `NEXT_PUBLIC_API_URL` en Vercel.
+7. **2FA**: define `TWOFA_ENCRYPTION_KEY` (`openssl rand -hex 32`). Guárdala en un gestor de secretos: si se pierde, los usuarios con 2FA no podrán entrar. Sin la clave, activar 2FA responde 503.
+8. **API en producción**: hosting para `apps/api` y `NEXT_PUBLIC_API_URL` en Vercel.
 
 ## Fases
-1 Core ✅ · 2 Negocio ✅ · 3 Ventas ✅ · 4 Suscripciones ✅ · 5 Sitio público ✅ · 6 Citas ✅ · Cuenta ✅ (verificación de correo y recuperación de contraseña con tokens de un solo uso, hasheados; un reset cierra las demás sesiones) · 9 Nuvio AI ✅ (textos y análisis con Claude, límite diario por negocio) · 8 Crecimiento ✅ (cupones, campañas a clientes con consentimiento, automatizaciones trigger→condición→acción, analytics) · 7 Comunicación ✅ (sin Redis/BullMQ: los recordatorios usan un cron idempotente) (registro crea prueba de 14 días; funciones por plan validadas en backend con HTTP 402) · 5+ pendientes.
+1 Core ✅ · 2 Negocio ✅ · 3 Ventas ✅ · 4 Suscripciones ✅ · 5 Sitio público ✅ · 6 Citas ✅ · 2FA ✅ (TOTP RFC 6238, códigos de recuperación, bloqueo por intentos) · Cuenta ✅ (verificación de correo y recuperación de contraseña con tokens de un solo uso, hasheados; un reset cierra las demás sesiones) · 9 Nuvio AI ✅ (textos y análisis con Claude, límite diario por negocio) · 8 Crecimiento ✅ (cupones, campañas a clientes con consentimiento, automatizaciones trigger→condición→acción, analytics) · 7 Comunicación ✅ (sin Redis/BullMQ: los recordatorios usan un cron idempotente) (registro crea prueba de 14 días; funciones por plan validadas en backend con HTTP 402) · 5+ pendientes.

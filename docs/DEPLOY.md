@@ -37,6 +37,7 @@ docker run -p 4000:4000 -e DATABASE_URL=… -e JWT_SECRET=$(openssl rand -hex 32
 - Define `NEXT_PUBLIC_ROOT_DOMAIN` si tu dominio raíz no es `nuvio.app`.
 
 ## 5. Checklist antes de abrir al público
+- [ ] `TWOFA_ENCRYPTION_KEY` definida y respaldada.
 - [ ] `JWT_SECRET` largo y aleatorio; HTTPS en todo; `NODE_ENV=production`.
 - [ ] Backups automáticos de Postgres y prueba de restauración.
 - [ ] Proveedor de cobros real registrado + secretos de webhook.

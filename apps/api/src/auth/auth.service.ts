@@ -6,6 +6,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/slug';
 import { TRIAL_DAYS } from '../subscriptions/access';
+import { TwoFactorService } from './two-factor.service';
 import { LoginDto, RegisterDto } from './auth.dto';
 
 export const hashToken = (t: string) => createHash('sha256').update(t).digest('hex');
@@ -13,7 +14,7 @@ const HOUR = 3_600_000;
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService, private notifications?: NotificationsService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService, private notifications?: NotificationsService, private twoFactor?: TwoFactorService) {}
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
@@ -56,6 +57,13 @@ export class AuthService {
     // Always run a hash comparison so timing doesn't reveal whether the email exists.
     const ok = await bcrypt.compare(dto.password, user?.passwordHash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinva');
     if (!user || !ok) throw new UnauthorizedException('Correo o contraseña incorrectos');
+    if (user.totpEnabled && this.twoFactor) return { twoFactorRequired: true as const, challenge: await this.twoFactor.challenge(user.id) };
+    return { twoFactorRequired: false as const, token: await this.sign(user.id), user: this.publicUser(user) };
+  }
+
+  /** Issues the session after the second factor passed. */
+  async sessionFor(userId: string) {
+    const user = await this.prisma.user.findFirstOrThrow({ where: { id: userId, deletedAt: null } });
     return { token: await this.sign(user.id), user: this.publicUser(user) };
   }
 
@@ -67,6 +75,7 @@ export class AuthService {
     return {
       ...this.publicUser(user),
       emailVerified: user.emailVerified,
+      twoFactorEnabled: user.totpEnabled,
       businesses: user.memberships.map((m) => ({ ...m.business, role: m.role })),
     };
   }

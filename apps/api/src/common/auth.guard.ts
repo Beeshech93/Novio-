@@ -28,7 +28,8 @@ export class AuthGuard implements CanActivate {
 
     let userId: string, issuedAt = 0;
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string; iat?: number }>(token);
+      const payload = await this.jwt.verifyAsync<{ sub: string; iat?: number; purpose?: string }>(token);
+      if (payload.purpose) throw new UnauthorizedException(); // e.g. 2FA challenge tokens are never valid sessions
       userId = payload.sub; issuedAt = (payload.iat ?? 0) * 1000;
     } catch {
       throw new UnauthorizedException();

@@ -27,6 +27,7 @@ import { AI_GENERATOR, AnthropicGenerator } from './ai/generator';
 import { HealthController } from './health/health.controller';
 import { StorageController } from './storage/storage.controller';
 import { StorageService } from './storage/storage.service';
+import { TwoFactorService } from './auth/two-factor.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -63,6 +64,7 @@ import { PrismaModule } from './prisma/prisma.module';
   controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController, AiController, HealthController, StorageController],
   providers: [
     AuthService,
+    TwoFactorService,
     ProductsService,
     CustomersService,
     OrdersService,
