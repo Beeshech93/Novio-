@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, NotImplementedException } from '@nestjs/common';
 import { PaymentMethod, Prisma } from '@prisma/client';
 import { fromCents, toCents } from '../orders/order-logic';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PAYMENT_PROVIDERS, PaymentProvider } from './payment-provider';
 
@@ -9,7 +10,7 @@ const ONLINE: PaymentMethod[] = ['CARD', 'PAYMENT_LINK', 'CHECKOUT'];
 @Injectable()
 export class PaymentsService {
   private log = new Logger('Payments');
-  constructor(private prisma: PrismaService, @Inject(PAYMENT_PROVIDERS) private providers: Map<string, PaymentProvider>) {}
+  constructor(private prisma: PrismaService, @Inject(PAYMENT_PROVIDERS) private providers: Map<string, PaymentProvider>, private notifications?: NotificationsService) {}
 
   list(businessId: string, orderId?: string) {
     return this.prisma.payment.findMany({ where: { businessId, ...(orderId && { orderId }) }, orderBy: { createdAt: 'desc' }, take: 100 });
@@ -86,11 +87,13 @@ export class PaymentsService {
   }
 
   private async markSucceeded(paymentId: string, businessId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    let changed = false;
+    const payment = await this.prisma.$transaction(async (tx) => {
       // Guarded: only PENDING -> SUCCEEDED, so replays can't double-count customer totals.
       const res = await tx.payment.updateMany({ where: { id: paymentId, businessId, status: 'PENDING' }, data: { status: 'SUCCEEDED' } });
       const payment = await tx.payment.findFirstOrThrow({ where: { id: paymentId, businessId } });
       if (res.count === 0 || !payment.orderId) return payment;
+      changed = true;
 
       const order = await tx.order.findFirstOrThrow({ where: { id: payment.orderId, businessId }, include: { payments: true } });
       const paid = order.payments.filter((p) => p.status === 'SUCCEEDED').reduce((s, p) => s + toCents(p.amount), 0);
@@ -105,5 +108,16 @@ export class PaymentsService {
       }
       return payment;
     });
+    if (changed) void this.notifyPaid(businessId, payment).catch(() => undefined);
+    return payment;
+  }
+
+  private async notifyPaid(businessId: string, payment: { orderId: string | null; amount: unknown }) {
+    const n = this.notifications;
+    if (!n || !payment.orderId) return;
+    const order = await this.prisma.order.findFirst({ where: { id: payment.orderId, businessId }, include: { customer: true, business: true } as any }) as any;
+    if (!order) return;
+    await n.internal(businessId, 'payment.succeeded', 'Pago recibido', `Pedido ${order.id.slice(0, 8)} · $${payment.amount}`);
+    await n.sendEmail(businessId, order.customer?.email, 'payment_confirmed', { business: order.business.name, orderId: order.id, amount: String(payment.amount) });
   }
 }

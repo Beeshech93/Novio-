@@ -2,6 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/slug';
 import { TRIAL_DAYS } from '../subscriptions/access';
@@ -9,7 +10,7 @@ import { LoginDto, RegisterDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService, private notifications?: NotificationsService) {}
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
@@ -41,6 +42,8 @@ export class AuthService {
       return { user, business };
     });
 
+    const web = (process.env.WEB_ORIGIN ?? '').split(',')[0];
+    void this.notifications?.sendEmail(business.id, user.email, 'welcome', { name: user.name, url: web ? `${web}/dashboard` : undefined }).catch(() => undefined);
     return { token: await this.sign(user.id), user: this.publicUser(user), business };
   }
 

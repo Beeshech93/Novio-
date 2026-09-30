@@ -290,6 +290,7 @@ CREATE TABLE "appointments" (
     "status" "AppointmentStatus" NOT NULL DEFAULT 'pending',
     "notes" TEXT,
     "source" TEXT NOT NULL DEFAULT 'internal',
+    "reminderSentAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "appointments_pkey" PRIMARY KEY ("id")
@@ -413,6 +414,9 @@ CREATE TABLE "notifications" (
     "type" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "body" TEXT,
+    "recipient" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'sent',
+    "error" TEXT,
     "readAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

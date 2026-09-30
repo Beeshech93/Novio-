@@ -380,21 +380,22 @@ model Employee {
 }
 
 model Appointment {
-  id         String            @id @default(uuid()) @db.Uuid
-  businessId String            @db.Uuid
-  customerId String?           @db.Uuid
-  employeeId String?           @db.Uuid
-  serviceId  String?           @db.Uuid
-  startAt    DateTime
-  endAt      DateTime
-  status     AppointmentStatus @default(pending)
-  notes      String?
-  source     String            @default("internal")
-  createdAt  DateTime          @default(now())
-  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer   Customer?         @relation(fields: [customerId], references: [id])
-  employee   Employee?         @relation(fields: [employeeId], references: [id])
-  service    Service?          @relation(fields: [serviceId], references: [id])
+  id             String            @id @default(uuid()) @db.Uuid
+  businessId     String            @db.Uuid
+  customerId     String?           @db.Uuid
+  employeeId     String?           @db.Uuid
+  serviceId      String?           @db.Uuid
+  startAt        DateTime
+  endAt          DateTime
+  status         AppointmentStatus @default(pending)
+  notes          String?
+  source         String            @default("internal")
+  reminderSentAt DateTime?
+  createdAt      DateTime          @default(now())
+  business       Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer       Customer?         @relation(fields: [customerId], references: [id])
+  employee       Employee?         @relation(fields: [employeeId], references: [id])
+  service        Service?          @relation(fields: [serviceId], references: [id])
 
   @@index([businessId, startAt])
   @@index([employeeId, startAt])
@@ -528,6 +529,9 @@ model Notification {
   type       String
   title      String
   body       String?
+  recipient  String?
+  status     String    @default("sent")
+  error      String?
   readAt     DateTime?
   createdAt  DateTime  @default(now())
   business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)

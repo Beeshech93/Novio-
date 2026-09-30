@@ -13,6 +13,9 @@ import { WebsitesController } from './websites/websites.controller';
 import { WebsitesService } from './websites/websites.service';
 import { AppointmentsController } from './appointments/appointments.controller';
 import { AppointmentsService } from './appointments/appointments.service';
+import { NotificationsController } from './notifications/notifications.controller';
+import { NotificationsService } from './notifications/notifications.service';
+import { EMAIL_PROVIDER, LogProvider, MetaWhatsAppProvider, ResendEmailProvider, WHATSAPP_PROVIDER } from './notifications/providers';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -46,7 +49,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController],
   providers: [
     AuthService,
     ProductsService,
@@ -56,6 +59,21 @@ import { PrismaModule } from './prisma/prisma.module';
     SubscriptionsService,
     WebsitesService,
     AppointmentsService,
+    NotificationsService,
+    {
+      provide: EMAIL_PROVIDER,
+      // Connect by setting RESEND_API_KEY + EMAIL_FROM. In development, falls back to logging.
+      useFactory: () => process.env.RESEND_API_KEY && process.env.EMAIL_FROM
+        ? new ResendEmailProvider(process.env.RESEND_API_KEY, process.env.EMAIL_FROM)
+        : process.env.NODE_ENV !== 'production' ? new LogProvider() : undefined,
+    },
+    {
+      provide: WHATSAPP_PROVIDER,
+      // Official Meta Cloud API. Connect by setting WHATSAPP_TOKEN + WHATSAPP_PHONE_ID.
+      useFactory: () => process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID
+        ? new MetaWhatsAppProvider(process.env.WHATSAPP_TOKEN, process.env.WHATSAPP_PHONE_ID)
+        : process.env.NODE_ENV !== 'production' ? new LogProvider() : undefined,
+    },
     {
       provide: BILLING_PROVIDERS,
       // Connect a real billing processor here (Stripe / Mercado Pago / Conekta) and set BILLING_PROVIDER.

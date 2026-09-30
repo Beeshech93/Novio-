@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AppointmentStatus, Prisma } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as D from './appointments.dto';
 import { computeSlots, Interval, overlaps, weekdayOf, zonedToUtc } from './time';
@@ -14,7 +15,7 @@ export const canMove = (from: AppointmentStatus, to: AppointmentStatus) => TRANS
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notifications?: NotificationsService) {}
 
   // ---------- services ----------
   listServices(businessId: string) { return this.prisma.service.findMany({ where: { businessId, deletedAt: null }, orderBy: { name: 'asc' } }); }
@@ -156,7 +157,7 @@ export class AppointmentsService {
     const business = await this.prisma.business.findFirstOrThrow({ where: { id: businessId } });
     const end = new Date(i.startAt.getTime() + service.durationMin * 60000);
 
-    return this.withSerializable(async (tx) => {
+    const appt = await this.withSerializable(async (tx) => {
       // The requested start must be one of the computed open slots for that day (hours, blocked days, notice, overlaps).
       const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: business.timezone }).format(i.startAt);
       const { slots } = await this.slotsFor(businessId, business.timezone, service.durationMin, localDate, i.employeeId, tx);
@@ -165,6 +166,18 @@ export class AppointmentsService {
         data: { businessId, customerId: i.customerId, employeeId: i.employeeId, serviceId: i.serviceId, startAt: i.startAt, endAt: end, notes: i.notes, source: i.source },
       });
     });
+    void this.notifyBooked(business, service.name, appt).catch(() => undefined); // fire-and-forget: never fails the booking
+    return appt;
+  }
+
+  private async notifyBooked(business: { id: string; name: string; timezone: string }, serviceName: string, appt: { customerId: string | null; startAt: Date }) {
+    const n = this.notifications;
+    if (!n) return;
+    const customer = appt.customerId ? await this.prisma.customer.findFirst({ where: { id: appt.customerId, businessId: business.id } }) : null;
+    await n.internal(business.id, 'appointment.created', 'Nueva cita', `${customer?.name ?? 'Cliente'} · ${serviceName}`);
+    const p = { business: business.name, service: serviceName, startAt: appt.startAt, tz: business.timezone };
+    await n.sendWhatsApp(business.id, customer?.whatsapp ?? customer?.phone, 'appointment_confirmation', p);
+    await n.sendEmail(business.id, customer?.email, 'appointment_created', p);
   }
 
   private async assertFree(tx: Prisma.TransactionClient, businessId: string, employeeId: string | null, iv: Interval, ignoreId?: string) {
