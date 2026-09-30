@@ -26,6 +26,9 @@ CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCEEDED', 'FAILED', 'REFUNDED
 CREATE TYPE "AppointmentStatus" AS ENUM ('pending', 'confirmed', 'completed', 'cancelled', 'no_show');
 
 -- CreateEnum
+CREATE TYPE "CouponKind" AS ENUM ('PERCENT', 'FIXED');
+
+-- CreateEnum
 CREATE TYPE "ItemStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 
 -- CreateTable
@@ -170,6 +173,7 @@ CREATE TABLE "customers" (
     "totalSpent" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "ordersCount" INTEGER NOT NULL DEFAULT 0,
     "lastPurchaseAt" TIMESTAMP(3),
+    "marketingOptIn" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
@@ -198,6 +202,7 @@ CREATE TABLE "orders" (
     "discount" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "total" DECIMAL(12,2) NOT NULL,
     "paymentMethod" "PaymentMethod",
+    "couponId" UUID,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -366,6 +371,9 @@ CREATE TABLE "campaigns" (
     "message" TEXT NOT NULL,
     "segment" JSONB,
     "status" TEXT NOT NULL DEFAULT 'draft',
+    "sentCount" INTEGER NOT NULL DEFAULT 0,
+    "failedCount" INTEGER NOT NULL DEFAULT 0,
+    "sentAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "campaigns_pkey" PRIMARY KEY ("id")
@@ -447,6 +455,36 @@ CREATE TABLE "audit_logs" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "coupons" (
+    "id" UUID NOT NULL,
+    "businessId" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "kind" "CouponKind" NOT NULL,
+    "value" DECIMAL(12,2) NOT NULL,
+    "minSubtotal" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "maxUses" INTEGER,
+    "usedCount" INTEGER NOT NULL DEFAULT 0,
+    "startsAt" TIMESTAMP(3),
+    "endsAt" TIMESTAMP(3),
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "coupons_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "automation_runs" (
+    "id" UUID NOT NULL,
+    "businessId" UUID NOT NULL,
+    "automationId" UUID NOT NULL,
+    "entityKey" TEXT NOT NULL,
+    "ranAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "automation_runs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -557,6 +595,15 @@ CREATE UNIQUE INDEX "integrations_businessId_type_key" ON "integrations"("busine
 -- CreateIndex
 CREATE INDEX "audit_logs_businessId_createdAt_idx" ON "audit_logs"("businessId", "createdAt");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "coupons_businessId_code_key" ON "coupons"("businessId", "code");
+
+-- CreateIndex
+CREATE INDEX "automation_runs_businessId_idx" ON "automation_runs"("businessId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "automation_runs_automationId_entityKey_key" ON "automation_runs"("automationId", "entityKey");
+
 -- AddForeignKey
 ALTER TABLE "business_members" ADD CONSTRAINT "business_members_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -661,4 +708,7 @@ ALTER TABLE "integrations" ADD CONSTRAINT "integrations_businessId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "coupons" ADD CONSTRAINT "coupons_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

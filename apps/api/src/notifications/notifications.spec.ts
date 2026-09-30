@@ -5,9 +5,9 @@ import { MetaWhatsAppProvider, verifyMetaSignature } from './providers';
 import { EMAIL_TEMPLATES, renderEmail, WA_TEMPLATES } from './templates';
 
 describe('email templates', () => {
-  it('has all 10 required templates', () => {
+  it('has all 10 required templates plus the campaign one', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual([
-      'appointment_created', 'appointment_reminder', 'order_new', 'password_reset', 'payment_confirmed', 'payment_failed',
+      'appointment_created', 'appointment_reminder', 'campaign', 'order_new', 'password_reset', 'payment_confirmed', 'payment_failed',
       'subscription_cancelled', 'subscription_renewed', 'verify_email', 'welcome',
     ]);
   });

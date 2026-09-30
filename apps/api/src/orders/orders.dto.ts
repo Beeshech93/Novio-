@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
+import { Matches, ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 
 export class OrderItemDto {
   @IsUUID() productId: string;
@@ -10,6 +10,7 @@ export class CreateOrderDto {
   @IsOptional() @IsUUID() customerId?: string;
   @IsArray() @ArrayMinSize(1) @ArrayMaxSize(100) @ValidateNested({ each: true }) @Type(() => OrderItemDto) items: OrderItemDto[];
   @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) discount?: number;
+  @IsOptional() @Matches(/^[A-Za-z0-9_-]{3,30}$/) couponCode?: string;
 }
 
 export class UpdateStatusDto {

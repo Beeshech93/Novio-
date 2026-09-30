@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AppointmentStatus, Prisma } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AutomationsService } from '../automations/automations.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as D from './appointments.dto';
 import { computeSlots, Interval, overlaps, weekdayOf, zonedToUtc } from './time';
@@ -15,7 +16,7 @@ export const canMove = (from: AppointmentStatus, to: AppointmentStatus) => TRANS
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService, private notifications?: NotificationsService) {}
+  constructor(private prisma: PrismaService, private notifications?: NotificationsService, private automations?: AutomationsService) {}
 
   // ---------- services ----------
   listServices(businessId: string) { return this.prisma.service.findMany({ where: { businessId, deletedAt: null }, orderBy: { name: 'asc' } }); }
@@ -166,6 +167,7 @@ export class AppointmentsService {
         data: { businessId, customerId: i.customerId, employeeId: i.employeeId, serviceId: i.serviceId, startAt: i.startAt, endAt: end, notes: i.notes, source: i.source },
       });
     });
+    void this.automations?.fire(businessId, 'appointment.created', `appointment:${appt.id}`, { customerId: appt.customerId, appointment: { service: service.name } });
     void this.notifyBooked(business, service.name, appt).catch(() => undefined); // fire-and-forget: never fails the booking
     return appt;
   }

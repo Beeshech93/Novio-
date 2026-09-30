@@ -70,6 +70,11 @@ enum AppointmentStatus {
   no_show
 }
 
+enum CouponKind {
+  PERCENT
+  FIXED
+}
+
 enum ItemStatus {
   ACTIVE
   INACTIVE
@@ -127,6 +132,7 @@ model Business {
   auditLogs     AuditLog[]
   hours         BusinessHours[]
   blockedDates  BlockedDate[]
+  coupons       Coupon[]
 
   @@map("businesses")
 }
@@ -250,6 +256,7 @@ model Customer {
   totalSpent     Decimal       @default(0) @db.Decimal(12, 2)
   ordersCount    Int           @default(0)
   lastPurchaseAt DateTime?
+  marketingOptIn Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
@@ -284,6 +291,7 @@ model Order {
   discount      Decimal        @default(0) @db.Decimal(12, 2)
   total         Decimal        @db.Decimal(12, 2)
   paymentMethod PaymentMethod?
+  couponId      String?        @db.Uuid
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -470,15 +478,18 @@ model Invoice {
 }
 
 model Campaign {
-  id         String   @id @default(uuid()) @db.Uuid
-  businessId String   @db.Uuid
-  name       String
-  channel    String
-  message    String
-  segment    Json?
-  status     String   @default("draft")
-  createdAt  DateTime @default(now())
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid()) @db.Uuid
+  businessId  String    @db.Uuid
+  name        String
+  channel     String
+  message     String
+  segment     Json?
+  status      String    @default("draft")
+  sentCount   Int       @default(0)
+  failedCount Int       @default(0)
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@map("campaigns")
@@ -566,4 +577,37 @@ model AuditLog {
 
   @@index([businessId, createdAt])
   @@map("audit_logs")
+}
+
+model Coupon {
+  id          String     @id @default(uuid()) @db.Uuid
+  businessId  String     @db.Uuid
+  code        String
+  kind        CouponKind
+  value       Decimal    @db.Decimal(12, 2)
+  minSubtotal Decimal    @default(0) @db.Decimal(12, 2)
+  maxUses     Int?
+  usedCount   Int        @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  deletedAt   DateTime?
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, code])
+  @@map("coupons")
+}
+
+model AutomationRun {
+  id           String   @id @default(uuid()) @db.Uuid
+  businessId   String   @db.Uuid
+  automationId String   @db.Uuid
+  /// Idempotency key, e.g. "customer:<id>:2026-06" so time-based automations don't repeat.
+  entityKey    String
+  ranAt        DateTime @default(now())
+
+  @@unique([automationId, entityKey])
+  @@index([businessId])
+  @@map("automation_runs")
 }

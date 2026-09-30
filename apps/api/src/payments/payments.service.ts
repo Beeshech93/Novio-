@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, Logger, Not
 import { PaymentMethod, Prisma } from '@prisma/client';
 import { fromCents, toCents } from '../orders/order-logic';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AutomationsService } from '../automations/automations.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PAYMENT_PROVIDERS, PaymentProvider } from './payment-provider';
 
@@ -10,7 +11,7 @@ const ONLINE: PaymentMethod[] = ['CARD', 'PAYMENT_LINK', 'CHECKOUT'];
 @Injectable()
 export class PaymentsService {
   private log = new Logger('Payments');
-  constructor(private prisma: PrismaService, @Inject(PAYMENT_PROVIDERS) private providers: Map<string, PaymentProvider>, private notifications?: NotificationsService) {}
+  constructor(private prisma: PrismaService, @Inject(PAYMENT_PROVIDERS) private providers: Map<string, PaymentProvider>, private notifications?: NotificationsService, private automations?: AutomationsService) {}
 
   list(businessId: string, orderId?: string) {
     return this.prisma.payment.findMany({ where: { businessId, ...(orderId && { orderId }) }, orderBy: { createdAt: 'desc' }, take: 100 });
@@ -112,12 +113,13 @@ export class PaymentsService {
     return payment;
   }
 
-  private async notifyPaid(businessId: string, payment: { orderId: string | null; amount: unknown }) {
+  private async notifyPaid(businessId: string, payment: { id?: string; orderId: string | null; amount: unknown }) {
     const n = this.notifications;
     if (!n || !payment.orderId) return;
     const order = await this.prisma.order.findFirst({ where: { id: payment.orderId, businessId }, include: { customer: true, business: true } as any }) as any;
     if (!order) return;
     await n.internal(businessId, 'payment.succeeded', 'Pago recibido', `Pedido ${order.id.slice(0, 8)} · $${payment.amount}`);
+    void this.automations?.fire(businessId, 'payment.succeeded', `payment:${(payment as any).id}`, { customerId: order.customerId, payment: { amount: Number(payment.amount) } });
     await n.sendEmail(businessId, order.customer?.email, 'payment_confirmed', { business: order.business.name, orderId: order.id, amount: String(payment.amount) });
   }
 }

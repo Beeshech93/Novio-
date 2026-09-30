@@ -32,6 +32,7 @@ export const EMAIL_TEMPLATES = {
   payment_failed: (p: { business: string; orderId: string; url?: string }) => layout('No pudimos procesar tu pago', [`El pago del pedido ${esc(p.orderId.slice(0, 8))} en ${esc(p.business)} no se completó.`, 'Puedes intentarlo de nuevo con otro método.'], p.url ? { label: 'Reintentar pago', url: p.url } : undefined),
   appointment_created: (p: { business: string; service: string; startAt: Date | string; tz?: string }) => layout('Tu cita fue registrada', [`<b>${esc(p.service)}</b> en ${esc(p.business)}.`, `Fecha: <b>${esc(when(p.startAt, p.tz))}</b>.`]),
   appointment_reminder: (p: { business: string; service: string; startAt: Date | string; tz?: string }) => layout('Recordatorio de tu cita', [`Te esperamos en ${esc(p.business)} para <b>${esc(p.service)}</b>.`, `Fecha: <b>${esc(when(p.startAt, p.tz))}</b>.`]),
+  campaign: (p: { business: string; subject: string; message: string }) => layout(p.subject, [esc(p.message).replace(/\n/g, '<br>'), `<span style="color:#9ca3af;font-size:12px">Recibes este mensaje de ${esc(p.business)} porque aceptaste recibir promociones. Responde "BAJA" para dejar de recibirlas.</span>`]),
   subscription_renewed: (p: { plan: string; until: Date | string }) => layout('Suscripción renovada', [`Tu plan <b>${esc(p.plan)}</b> está activo hasta el ${esc(when(p.until))}.`]),
   subscription_cancelled: (p: { plan: string; until?: Date | string }) => layout('Suscripción cancelada', [p.until ? `Conservas el acceso a <b>${esc(p.plan)}</b> hasta el ${esc(when(p.until))}. No borramos tus datos.` : `Tu plan <b>${esc(p.plan)}</b> fue cancelado. No borramos tus datos.`]),
 } as const;
@@ -41,6 +42,7 @@ export const renderEmail = <K extends EmailTemplate>(k: K, params: Parameters<(t
 
 /** WhatsApp (Meta Cloud API) message templates. Names must be pre-approved in Meta Business Manager. */
 export const WA_TEMPLATES = {
+  campaign: { name: 'nuvio_campaign', params: (p: { business: string; message: string }) => [p.business, p.message.replace(/\s+/g, ' ').slice(0, 900)] },
   order_confirmation: { name: 'nuvio_order_confirmation', params: (p: { business: string; total: number | string }) => [p.business, money(p.total)] },
   appointment_confirmation: { name: 'nuvio_appointment_confirmation', params: (p: { business: string; service: string; startAt: Date | string; tz?: string }) => [p.business, p.service, when(p.startAt, p.tz)] },
   appointment_reminder: { name: 'nuvio_appointment_reminder', params: (p: { business: string; service: string; startAt: Date | string; tz?: string }) => [p.business, p.service, when(p.startAt, p.tz)] },

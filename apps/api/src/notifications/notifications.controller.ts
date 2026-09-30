@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'crypto';
 import { Public, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
 import { verifyMetaSignature } from './providers';
+import { AutomationsService } from '../automations/automations.service';
 import { NotificationsService } from './notifications.service';
 
 const safeEq = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -11,7 +12,7 @@ const safeEq = (a: string, b: string) => a.length === b.length && timingSafeEqua
 @ApiTags('notifications')
 @Controller()
 export class NotificationsController {
-  constructor(private svc: NotificationsService) {}
+  constructor(private svc: NotificationsService, private autos: AutomationsService) {}
 
   @Get('notifications') async list(@Tenant() t: TenantContext) { return { items: await this.svc.list(t.businessId), unread: await this.svc.unreadCount(t.businessId) }; }
   @HttpCode(204) @Patch('notifications/:id/read') async read(@Tenant() t: TenantContext, @Param('id', ParseUUIDPipe) id: string) { await this.svc.markRead(t.businessId, id); }
@@ -23,7 +24,7 @@ export class NotificationsController {
     const expected = process.env.CRON_SECRET;
     if (!expected) throw new ForbiddenException('CRON_SECRET no configurado');
     if (!secret || !safeEq(secret, expected)) throw new UnauthorizedException();
-    return this.svc.sendDueReminders();
+    return { reminders: await this.svc.sendDueReminders(), automations: await this.autos.runInactiveCustomers() };
   }
 
   /** Meta webhook handshake. */

@@ -6,7 +6,7 @@ import { Logo } from './Logo';
 const NAV: [string, string | null][] = [
   ['Inicio', '/dashboard'], ['Ventas', null], ['Pedidos', null], ['Productos', '/dashboard/productos'], ['Inventario', '/dashboard/productos'],
   ['Clientes', '/dashboard/clientes'], ['CRM', '/dashboard/clientes'], ['Citas', '/dashboard/citas'], ['Mi página', '/dashboard/mi-pagina'], ['WhatsApp', null],
-  ['Facturación', null], ['Pagos', null], ['Marketing', null], ['Automatizaciones', null], ['Analytics', null], ['Configuración', null],
+  ['Facturación', null], ['Pagos', null], ['Marketing', '/dashboard/marketing'], ['Automatizaciones', null], ['Analytics', '/dashboard/analytics'], ['Configuración', null],
 ];
 
 export function DashShell({ children }: { children: React.ReactNode }) {

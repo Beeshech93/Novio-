@@ -1,12 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
+import { AutomationsService } from '../automations/automations.service';
+import { couponDiscountCents, couponProblem } from '../marketing/coupon-logic';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto, ListOrdersQuery } from './orders.dto';
-import { canTransition, computeTotals, fromCents } from './order-logic';
+import { canTransition, computeTotals, fromCents, toCents } from './order-logic';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private automations?: AutomationsService) {}
 
   async list(businessId: string, q: ListOrdersQuery) {
     const where: Prisma.OrderWhereInput = { businessId, ...(q.status && { status: q.status }) };
@@ -32,7 +34,7 @@ export class OrdersService {
     const ids = [...new Set(dto.items.map((i) => i.productId))];
     if (ids.length !== dto.items.length) throw new BadRequestException('Productos duplicados en el pedido');
 
-    return this.prisma.$transaction(async (tx) => {
+    const order = await this.prisma.$transaction(async (tx) => {
       if (dto.customerId) {
         const c = await tx.customer.findFirst({ where: { id: dto.customerId, businessId, deletedAt: null } });
         if (!c) throw new BadRequestException('Cliente inválido');
@@ -49,19 +51,35 @@ export class OrdersService {
         if (res.count !== 1) throw new ConflictException(`Stock insuficiente para "${byId.get(item.productId)!.name}"`);
       }
 
-      const totals = computeTotals(
-        dto.items.map((i) => ({ unitPrice: Number(byId.get(i.productId)!.price), quantity: i.quantity, taxRate: Number(byId.get(i.productId)!.taxRate) })),
-        dto.discount ?? 0,
-      );
+      const lines = dto.items.map((i) => ({ unitPrice: Number(byId.get(i.productId)!.price), quantity: i.quantity, taxRate: Number(byId.get(i.productId)!.taxRate) }));
+      let couponId: string | undefined;
+      let couponCents = 0;
+      if (dto.couponCode) {
+        const coupon = await tx.coupon.findFirst({ where: { businessId, code: dto.couponCode.toUpperCase(), deletedAt: null } });
+        const subtotalCents = computeTotals(lines, 0).subtotal;
+        const problem = coupon ? couponProblem(coupon as any, subtotalCents) : 'Cupón no encontrado';
+        if (!coupon || problem) throw new BadRequestException(problem ?? 'Cupón inválido');
+        // Guarded increment: two concurrent orders can't exceed maxUses.
+        const claim = await tx.coupon.updateMany({
+          where: { id: coupon.id, businessId, ...(coupon.maxUses !== null && { usedCount: { lt: coupon.maxUses } }) },
+          data: { usedCount: { increment: 1 } },
+        });
+        if (claim.count !== 1) throw new ConflictException('El cupón ya alcanzó su límite de usos');
+        couponId = coupon.id;
+        couponCents = couponDiscountCents(coupon as any, subtotalCents);
+      }
+      const totals = computeTotals(lines, (dto.discount ?? 0) + couponCents / 100);
       return tx.order.create({
         data: {
-          businessId, customerId: dto.customerId,
+          businessId, customerId: dto.customerId, couponId,
           subtotal: fromCents(totals.subtotal), tax: fromCents(totals.tax), discount: fromCents(totals.discount), total: fromCents(totals.total),
           items: { create: dto.items.map((i) => ({ businessId, productId: i.productId, name: byId.get(i.productId)!.name, quantity: i.quantity, unitPrice: byId.get(i.productId)!.price })) },
         },
         include: { items: true },
       });
     });
+    void this.automations?.fire(businessId, 'order.created', `order:${order.id}`, { customerId: order.customerId, order: { total: Number(order.total), status: order.status } });
+    return order;
   }
 
   async setStatus(businessId: string, id: string, to: OrderStatus) {

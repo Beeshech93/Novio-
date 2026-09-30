@@ -16,6 +16,11 @@ import { AppointmentsService } from './appointments/appointments.service';
 import { NotificationsController } from './notifications/notifications.controller';
 import { NotificationsService } from './notifications/notifications.service';
 import { EMAIL_PROVIDER, LogProvider, MetaWhatsAppProvider, ResendEmailProvider, WHATSAPP_PROVIDER } from './notifications/providers';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { AnalyticsService } from './analytics/analytics.service';
+import { AutomationsService } from './automations/automations.service';
+import { MarketingController } from './marketing/marketing.controller';
+import { MarketingService } from './marketing/marketing.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -49,7 +54,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController],
   providers: [
     AuthService,
     ProductsService,
@@ -60,6 +65,9 @@ import { PrismaModule } from './prisma/prisma.module';
     WebsitesService,
     AppointmentsService,
     NotificationsService,
+    MarketingService,
+    AutomationsService,
+    AnalyticsService,
     {
       provide: EMAIL_PROVIDER,
       // Connect by setting RESEND_API_KEY + EMAIL_FROM. In development, falls back to logging.

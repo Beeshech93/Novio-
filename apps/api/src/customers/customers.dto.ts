@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsEmail, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsBoolean, ArrayMaxSize, IsArray, IsEmail, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CustomerDto {
   @IsString() @MinLength(1) @MaxLength(120) name: string;
@@ -9,6 +9,8 @@ export class CustomerDto {
   @IsOptional() @IsString() @MaxLength(200) address?: string;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;
   @IsOptional() @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @MaxLength(30, { each: true }) tags?: string[];
+  /** Consent to receive promotions (WhatsApp/email campaigns). Off by default. */
+  @IsOptional() @IsBoolean() marketingOptIn?: boolean;
 }
 
 export class UpdateCustomerDto {
@@ -19,6 +21,8 @@ export class UpdateCustomerDto {
   @IsOptional() @IsString() @MaxLength(200) address?: string;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;
   @IsOptional() @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @MaxLength(30, { each: true }) tags?: string[];
+  /** Consent to receive promotions (WhatsApp/email campaigns). Off by default. */
+  @IsOptional() @IsBoolean() marketingOptIn?: boolean;
 }
 
 export class ListCustomersQuery {
