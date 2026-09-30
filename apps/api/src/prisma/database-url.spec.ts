@@ -20,6 +20,15 @@ describe('resolveDatabaseUrl', () => {
     expect(new URL(resolveDatabaseUrl({ DATABASE_URL: neon })!).searchParams.get('pgbouncer')).toBe('true');
     expect(new URL(resolveDatabaseUrl({ DATABASE_URL: neon.replace('-pooler', '') })!).searchParams.has('pgbouncer')).toBe(false);
   });
+  it('with DB_SCHEMA prefers the direct connection (search_path does not survive a transaction pooler)', () => {
+    const env = { DATABASE_URL: neon, DATABASE_URL_UNPOOLED: neon.replace('-pooler', ''), DB_SCHEMA: 'nuvio' };
+    const u = new URL(resolveDatabaseUrl(env)!);
+    expect(u.hostname).not.toContain('-pooler');
+    expect(u.searchParams.get('schema')).toBe('nuvio');
+    expect(u.searchParams.has('pgbouncer')).toBe(false);
+    // without DB_SCHEMA the pooled URL is used as-is
+    expect(new URL(resolveDatabaseUrl({ DATABASE_URL: neon, DATABASE_URL_UNPOOLED: env.DATABASE_URL_UNPOOLED })!).hostname).toContain('-pooler');
+  });
   it('limits connections on Vercel only', () => {
     expect(new URL(resolveDatabaseUrl({ DATABASE_URL: pooler, VERCEL: '1' })!).searchParams.get('connection_limit')).toBe('1');
     expect(new URL(resolveDatabaseUrl({ DATABASE_URL: pooler })!).searchParams.has('connection_limit')).toBe(false);
