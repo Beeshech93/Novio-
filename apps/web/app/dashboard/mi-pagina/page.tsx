@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { DashShell } from '@/components/DashShell';
+import { ImageUpload } from '@/components/ImageUpload';
 import { SiteRenderer } from '@/components/SiteRenderer';
 import { api } from '@/lib/api';
 import { DEMOS, PublicSite, SiteContent, TEMPLATES } from '@/lib/site';
@@ -92,6 +93,20 @@ export default function MiPagina() {
             <div className="grid grid-cols-2 gap-3">
               <label className="text-sm font-medium">Color principal<input type="color" className="mt-1 h-11 w-full rounded-xl border border-slate-300" value={content.primaryColor ?? TEMPLATES.find((t) => t.slug === template)!.primary} onChange={(e) => set('primaryColor', e.target.value)} /></label>
               <label className="text-sm font-medium">Color de acento<input type="color" className="mt-1 h-11 w-full rounded-xl border border-slate-300" value={content.accentColor ?? TEMPLATES.find((t) => t.slug === template)!.accent} onChange={(e) => set('accentColor', e.target.value)} /></label>
+            </div>
+          </div>
+          <div className="card space-y-3">
+            <p className="text-sm font-semibold">Imágenes</p>
+            <div className="flex flex-wrap items-center gap-3">
+              {content.logoUrl && <img src={content.logoUrl} alt="Logo" className="h-12 w-12 rounded-full object-cover" />}
+              <ImageUpload purpose="logo" label={content.logoUrl ? 'Cambiar logo' : 'Subir logo'} disabled={demo} onDone={(u) => set('logoUrl', u)} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(content.photos ?? []).map((p) => (
+                <span key={p} className="relative"><img src={p} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                  <button type="button" aria-label="Quitar foto" onClick={() => setContent((c) => ({ ...c, photos: (c.photos ?? []).filter((x) => x !== p) }))} className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-slate-900 text-xs text-white">×</button></span>
+              ))}
+              {(content.photos ?? []).length < 12 && <ImageUpload purpose="gallery" label="Agregar foto" disabled={demo} onDone={(u) => setContent((c) => ({ ...c, photos: [...(c.photos ?? []), u] }))} />}
             </div>
           </div>
           <div className="card space-y-3">

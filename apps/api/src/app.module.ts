@@ -25,6 +25,8 @@ import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
 import { AI_GENERATOR, AnthropicGenerator } from './ai/generator';
 import { HealthController } from './health/health.controller';
+import { StorageController } from './storage/storage.controller';
+import { StorageService } from './storage/storage.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -58,7 +60,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController, AiController, HealthController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController, AiController, HealthController, StorageController],
   providers: [
     AuthService,
     ProductsService,
@@ -73,6 +75,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AutomationsService,
     AnalyticsService,
     AiService,
+    { provide: StorageService, useFactory: () => new StorageService() },
     {
       provide: AI_GENERATOR,
       // Connect by setting ANTHROPIC_API_KEY. AI_MODEL overrides the default fast/cheap model.
