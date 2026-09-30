@@ -4,9 +4,9 @@ import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
 
 const NAV: [string, string | null][] = [
-  ['Inicio', '/dashboard'], ['Ventas', null], ['Pedidos', null], ['Productos', '/dashboard/productos'], ['Inventario', '/dashboard/productos'],
+  ['Inicio', '/dashboard'], ['Ventas', '/dashboard/pedidos'], ['Pedidos', '/dashboard/pedidos'], ['Productos', '/dashboard/productos'], ['Inventario', '/dashboard/productos'],
   ['Clientes', '/dashboard/clientes'], ['CRM', '/dashboard/clientes'], ['Citas', '/dashboard/citas'], ['Mi página', '/dashboard/mi-pagina'], ['WhatsApp', null],
-  ['Facturación', null], ['Pagos', null], ['Marketing', '/dashboard/marketing'], ['Automatizaciones', null], ['Analytics', '/dashboard/analytics'], ['Nuvio AI', '/dashboard/asistente'], ['Configuración', null],
+  ['Facturación', null], ['Pagos', '/dashboard/pedidos'], ['Marketing', '/dashboard/marketing'], ['Automatizaciones', null], ['Analytics', '/dashboard/analytics'], ['Nuvio AI', '/dashboard/asistente'], ['Suscripción', '/dashboard/suscripcion'], ['Configuración', null],
 ];
 
 export function DashShell({ children }: { children: React.ReactNode }) {
