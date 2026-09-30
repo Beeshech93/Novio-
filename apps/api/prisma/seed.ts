@@ -1,5 +1,5 @@
 import { PrismaClient, BillingInterval } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { ensureAdmin } from '../src/common/admin-promote';
 
 const prisma = new PrismaClient();
 
@@ -22,17 +22,10 @@ async function main() {
   }
 }
 
-// Platform admin is created only when ADMIN_EMAIL + ADMIN_PASSWORD are provided (never hardcoded).
+// Platform admin: driven by ADMIN_EMAIL (+ optional ADMIN_PASSWORD). See src/common/admin-promote.ts.
 async function seedAdmin() {
-  const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password) return console.log('ADMIN_EMAIL/ADMIN_PASSWORD not set: skipping SUPER_ADMIN');
-  if (password.length < 12) throw new Error('ADMIN_PASSWORD must be at least 12 characters');
-  await prisma.user.upsert({
-    where: { email }, update: { platformRole: 'SUPER_ADMIN' },
-    create: { email, name: 'Nuvio Admin', passwordHash: await bcrypt.hash(password, 12), platformRole: 'SUPER_ADMIN', emailVerified: true },
-  });
-  console.log(`SUPER_ADMIN ready: ${email}`);
+  const r = await ensureAdmin(prisma as never);
+  console.log(`SUPER_ADMIN: ${r}${r === 'not-registered' ? ' (register that email in the app first, then redeploy)' : ''}`);
 }
 
 main().then(seedAdmin).finally(() => prisma.$disconnect());
