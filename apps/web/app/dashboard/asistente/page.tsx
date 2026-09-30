@@ -10,7 +10,7 @@ const TASKS: [string, string][] = [
 const LABELS: Record<string, string> = { headline: 'Título', promotion: 'Promoción', whatsapp: 'WhatsApp', social_post: 'Publicación', cta: 'Llamado a la acción', text: 'Texto', hashtags: 'Hashtags', subject: 'Asunto' };
 const DEMO: Record<string, string> = {
   headline: '¡Fin de semana de estilo!', promotion: 'Corte + barba con 15% de descuento sábado y domingo.',
-  whatsapp: 'Hola 👋 Este fin de semana tenemos corte + barba con 15% de descuento. ¿Te reservamos un lugar?',
+  whatsapp: 'Hola, este fin de semana tenemos corte + barba con 15% de descuento. ¿Te reservamos un lugar?',
   social_post: '💈 Este fin de semana renueva tu look. Corte + barba con 15% off. #barbería #estilo', cta: 'Reserva tu cita hoy',
 };
 
