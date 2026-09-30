@@ -5,7 +5,7 @@ import { Logo } from './Logo';
 
 const NAV: [string, string | null][] = [
   ['Inicio', '/dashboard'], ['Ventas', null], ['Pedidos', null], ['Productos', '/dashboard/productos'], ['Inventario', '/dashboard/productos'],
-  ['Clientes', '/dashboard/clientes'], ['CRM', '/dashboard/clientes'], ['Citas', null], ['Mi página', null], ['WhatsApp', null],
+  ['Clientes', '/dashboard/clientes'], ['CRM', '/dashboard/clientes'], ['Citas', null], ['Mi página', '/dashboard/mi-pagina'], ['WhatsApp', null],
   ['Facturación', null], ['Pagos', null], ['Marketing', null], ['Automatizaciones', null], ['Analytics', null], ['Configuración', null],
 ];
 
