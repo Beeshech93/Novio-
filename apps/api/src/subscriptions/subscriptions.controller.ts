@@ -25,7 +25,7 @@ export class SubscriptionsController {
 
   /** Public on purpose: authenticated by provider signature over the raw body. */
   @Public() @HttpCode(200) @Post('webhooks/billing/:provider')
-  webhook(@Param('provider') provider: string, @Req() req: { rawBody?: Buffer }, @Headers('x-nuvio-signature') sig?: string) {
-    return this.svc.handleWebhook(provider, req.rawBody ?? Buffer.alloc(0), sig);
+  webhook(@Param('provider') provider: string, @Req() req: { rawBody?: Buffer }, @Headers('x-nuvio-signature') sig?: string, @Headers('stripe-signature') stripeSig?: string) {
+    return this.svc.handleWebhook(provider, req.rawBody ?? Buffer.alloc(0), stripeSig ?? sig);
   }
 }

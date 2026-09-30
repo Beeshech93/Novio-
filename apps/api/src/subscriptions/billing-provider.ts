@@ -17,7 +17,8 @@ export interface BillingProvider {
   readonly name: string;
   createCheckout(input: { businessId: string; planId: string; planName: string; amountCents: number; currency: string; interval: 'MONTHLY' | 'YEARLY'; successUrl: string; cancelUrl: string }): Promise<{ checkoutUrl: string }>;
   /** Verify signature over the RAW body; throw 401 if invalid. */
-  parseWebhook(rawBody: Buffer, signature: string | undefined): BillingEvent;
+  /** Return null for events we don't act on: they are acknowledged (2xx) and ignored. */
+  parseWebhook(rawBody: Buffer, signature: string | undefined): BillingEvent | null;
   cancelAtPeriodEnd?(providerSubscriptionId: string, cancel: boolean): Promise<void>;
 }
 

@@ -23,6 +23,14 @@ Variables del proyecto **nuvio-api** (Settings → Environment Variables): `WEB_
 Variables del proyecto **nuvio** (web): `API_ORIGIN=https://nuvio-api.vercel.app` (sin `/api/v1`) y `NEXT_PUBLIC_API_URL=/api/v1`. Redepliega la web después de cambiarlas.
 **Protección de despliegues:** en `nuvio-api` la URL de producción `https://nuvio-api.vercel.app` es pública (verificado: responde sin pedir login), pero las URLs por despliegue (`nuvio-api-wishebee.vercel.app`, previews) piden *Vercel Authentication*. Usa siempre `https://nuvio-api.vercel.app` como `API_ORIGIN`.
 
+## Cobros con Stripe
+1. Cuenta de Stripe (modo *test* primero) → Developers → API keys → copia la **Secret key** (`sk_test_…`).
+2. Developers → Webhooks → *Add endpoint* (dos endpoints, cada uno te da su propio `whsec_…`):
+   - `https://<tu-web>/api/v1/webhooks/payments/stripe` → eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`.
+   - `https://<tu-web>/api/v1/webhooks/billing/stripe` → eventos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+3. En Vercel (`nuvio-api`, Sensitive): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_PAYMENTS`, `STRIPE_WEBHOOK_SECRET_BILLING`. Al existir la clave y su secreto, Stripe pasa a ser el proveedor por defecto (`PAYMENT_PROVIDER` / `BILLING_PROVIDER` solo hacen falta para forzar otro).
+4. Los pagos se confirman **solo** por webhook firmado (timestamp máx. 5 min, comparación en tiempo constante); el monto se toma de Stripe y se compara con el del pedido. Prueba con tarjetas de prueba de Stripe (4242 4242 4242 4242) antes de pasar a `sk_live_…`.
+
 ## 1. Base de datos
 1. Crea una base vacía y copia su `DATABASE_URL`.
 2. La API aplica migraciones al arrancar si `RUN_MIGRATIONS=1` (o a mano: `npx prisma migrate deploy --schema apps/api/prisma/schema.prisma`).

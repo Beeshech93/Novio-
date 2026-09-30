@@ -33,7 +33,7 @@ export class PaymentsService {
     });
     if (!ONLINE.includes(method)) return { payment, checkoutUrl: null }; // in-store / transfer: confirmed manually by staff
 
-    const provider = this.providers.get(process.env.PAYMENT_PROVIDER ?? 'mock');
+    const provider = this.providers.get(process.env.PAYMENT_PROVIDER ?? (this.providers.has('stripe') ? 'stripe' : 'mock'));
     if (!provider) {
       await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
       throw new NotImplementedException('No hay un proveedor de pagos configurado');
@@ -61,6 +61,7 @@ export class PaymentsService {
     const provider = this.providers.get(providerName);
     if (!provider) throw new NotFoundException();
     const ev = provider.parseWebhook(rawBody, signature); // throws 401 if signature is invalid
+    if (!ev) return { received: true, ignored: true };
 
     try {
       await this.prisma.webhookEvent.create({ data: { provider: providerName, externalId: ev.id, type: ev.type, payload: JSON.parse(rawBody.toString('utf8')) } });

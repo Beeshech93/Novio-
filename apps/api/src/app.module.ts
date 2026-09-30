@@ -40,6 +40,8 @@ import { ProductsController } from './products/products.controller';
 import { ProductsService } from './products/products.service';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
+import { StripePaymentProvider } from './payments/stripe-payment.provider';
+import { StripeBillingProvider } from './subscriptions/stripe-billing.provider';
 import { PAYMENT_PROVIDERS, PaymentProvider } from './payments/payment-provider';
 import { MockPaymentProvider } from './payments/mock.provider';
 import { PaymentsController } from './payments/payments.controller';
@@ -107,6 +109,9 @@ import { PrismaService } from './prisma/prisma.service';
       useFactory: () => {
         const providers = new Map<string, BillingProvider>();
         if (process.env.NODE_ENV !== 'production') providers.set('mock', new MockBillingProvider(process.env.BILLING_WEBHOOK_SECRET ?? 'dev-only-secret'));
+        // Stripe turns on only when both the API key and the webhook signing secret are present.
+        const secret = process.env.STRIPE_WEBHOOK_SECRET_BILLING ?? process.env.STRIPE_WEBHOOK_SECRET;
+        if (process.env.STRIPE_SECRET_KEY && secret) providers.set('stripe', new StripeBillingProvider(process.env.STRIPE_SECRET_KEY, secret));
         return providers;
       },
     },
@@ -118,6 +123,8 @@ import { PrismaService } from './prisma/prisma.service';
         if (process.env.NODE_ENV !== 'production') {
           providers.set('mock', new MockPaymentProvider(process.env.PAYMENT_WEBHOOK_SECRET ?? 'dev-only-secret'));
         }
+        const stripeSecret = process.env.STRIPE_WEBHOOK_SECRET_PAYMENTS ?? process.env.STRIPE_WEBHOOK_SECRET;
+        if (process.env.STRIPE_SECRET_KEY && stripeSecret) providers.set('stripe', new StripePaymentProvider(process.env.STRIPE_SECRET_KEY, stripeSecret));
         return providers;
       },
     },

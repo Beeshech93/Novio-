@@ -24,7 +24,7 @@ export class SubscriptionsService {
     // The price is read from the DB plan row — the client only chooses slug + interval.
     const plan = await this.prisma.plan.findFirst({ where: { slug: planSlug, billingInterval: interval, active: true } });
     if (!plan) throw new NotFoundException('Plan no encontrado');
-    const provider = this.providers.get(process.env.BILLING_PROVIDER ?? 'mock');
+    const provider = this.providers.get(process.env.BILLING_PROVIDER ?? (this.providers.has('stripe') ? 'stripe' : 'mock'));
     if (!provider) throw new NotImplementedException('No hay un proveedor de cobro conectado todavía');
     const web = (process.env.WEB_ORIGIN ?? 'http://localhost:3000').split(',')[0];
     return provider.createCheckout({
@@ -47,6 +47,7 @@ export class SubscriptionsService {
     const provider = this.providers.get(providerName);
     if (!provider) throw new NotFoundException();
     const ev = provider.parseWebhook(raw, signature);
+    if (!ev) return { received: true, ignored: true };
 
     try {
       await this.prisma.webhookEvent.create({ data: { provider: `billing:${providerName}`, externalId: ev.id, type: ev.type, payload: JSON.parse(raw.toString('utf8')) } });
