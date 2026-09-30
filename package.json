@@ -1,0 +1,10 @@
+{
+  "name": "nuvio",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run start:dev -w @nuvio/api",
+    "dev:web": "npm run dev -w @nuvio/web",
+    "test": "npm test -w @nuvio/api"
+  }
+}
