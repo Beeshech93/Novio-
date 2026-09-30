@@ -1,17 +1,10 @@
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
-import { API_URL } from '@/lib/api';
+import { fetchJsonSafe } from '@/lib/api';
 
 interface Plan { id: string; name: string; slug: string; billingInterval: 'MONTHLY' | 'YEARLY'; price: string; currency: string }
 
-async function getPlans(): Promise<Plan[]> {
-  try {
-    const res = await fetch(`${API_URL}/plans`, { next: { revalidate: 60 } });
-    return res.ok ? res.json() : [];
-  } catch {
-    return [];
-  }
-}
+const getPlans = () => fetchJsonSafe<Plan[]>('/plans', []);
 
 export default async function Precios() {
   const plans = await getPlans();

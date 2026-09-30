@@ -26,3 +26,17 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
+
+/**
+ * Server-side fetch for public pages (SSR/ISR/build). NEVER throws: on a network error, a non-2xx status or a
+ * non-JSON body (e.g. a platform login page) it returns `fallback`, so a broken API can't fail a build or a page.
+ */
+export async function fetchJsonSafe<T>(path: string, fallback: T, revalidate = 60): Promise<T> {
+  try {
+    const res = await fetch(`${API_URL}${path}`, { next: { revalidate }, redirect: 'manual' });
+    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('application/json')) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}

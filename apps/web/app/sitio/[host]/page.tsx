@@ -1,15 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SiteRenderer } from '@/components/SiteRenderer';
-import { API_URL } from '@/lib/api';
+import { fetchJsonSafe } from '@/lib/api';
 import { PublicSite } from '@/lib/site';
 
-async function load(host: string): Promise<PublicSite | null> {
-  try {
-    const res = await fetch(`${API_URL}/public/sites/${encodeURIComponent(host)}`, { next: { revalidate: 30 } });
-    return res.ok ? res.json() : null;
-  } catch { return null; }
-}
+const load = (host: string) => fetchJsonSafe<PublicSite | null>(`/public/sites/${encodeURIComponent(host)}`, null, 30);
 
 export async function generateMetadata({ params }: { params: { host: string } }): Promise<Metadata> {
   const s = await load(params.host);
