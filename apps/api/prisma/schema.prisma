@@ -102,6 +102,7 @@ model Business {
   address   String?
   email     String?
   goals     String[]
+  timezone  String         @default("America/Mexico_City")
   status    BusinessStatus @default(ACTIVE)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
@@ -124,6 +125,8 @@ model Business {
   notifications Notification[]
   integrations  Integration[]
   auditLogs     AuditLog[]
+  hours         BusinessHours[]
+  blockedDates  BlockedDate[]
 
   @@map("businesses")
 }
@@ -386,6 +389,7 @@ model Appointment {
   endAt      DateTime
   status     AppointmentStatus @default(pending)
   notes      String?
+  source     String            @default("internal")
   createdAt  DateTime          @default(now())
   business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer   Customer?         @relation(fields: [customerId], references: [id])
@@ -393,7 +397,33 @@ model Appointment {
   service    Service?          @relation(fields: [serviceId], references: [id])
 
   @@index([businessId, startAt])
+  @@index([employeeId, startAt])
   @@map("appointments")
+}
+
+model BusinessHours {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @db.Uuid
+  /// 0 = Sunday ... 6 = Saturday. A missing row means closed that day.
+  weekday    Int
+  openMin    Int
+  closeMin   Int
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, weekday])
+  @@map("business_hours")
+}
+
+model BlockedDate {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @db.Uuid
+  employeeId String?  @db.Uuid
+  date       DateTime @db.Date
+  reason     String?
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, date])
+  @@map("blocked_dates")
 }
 
 model WebsiteTemplate {

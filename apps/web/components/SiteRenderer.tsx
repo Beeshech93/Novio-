@@ -1,8 +1,9 @@
+import { BookingWidget } from './BookingWidget';
 import { PublicSite, SiteItem, TEMPLATES, safeUrl, themeOf, waLink } from '@/lib/site';
 
 const money = (n: string | number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(n));
 
-export function SiteRenderer({ site }: { site: PublicSite }) {
+export function SiteRenderer({ site, host }: { site: PublicSite; host?: string }) {
   const t = TEMPLATES.find((x) => x.slug === site.templateSlug) ?? TEMPLATES[TEMPLATES.length - 1];
   const c = site.content;
   const { primary, accent } = themeOf(t, c);
@@ -59,6 +60,8 @@ export function SiteRenderer({ site }: { site: PublicSite }) {
           </div>
         </section>
       )}
+
+      {site.services.length > 0 && <BookingWidget host={host} services={site.services} color={primary} />}
 
       {photos.length > 0 && (
         <section className="mx-auto grid max-w-5xl grid-cols-2 gap-3 px-4 pb-14 sm:grid-cols-3">

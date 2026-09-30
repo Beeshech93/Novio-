@@ -11,6 +11,8 @@ import { SubscriptionsController } from './subscriptions/subscriptions.controlle
 import { SubscriptionsService } from './subscriptions/subscriptions.service';
 import { WebsitesController } from './websites/websites.controller';
 import { WebsitesService } from './websites/websites.service';
+import { AppointmentsController } from './appointments/appointments.controller';
+import { AppointmentsService } from './appointments/appointments.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -44,7 +46,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController],
   providers: [
     AuthService,
     ProductsService,
@@ -53,6 +55,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PaymentsService,
     SubscriptionsService,
     WebsitesService,
+    AppointmentsService,
     {
       provide: BILLING_PROVIDERS,
       // Connect a real billing processor here (Stripe / Mercado Pago / Conekta) and set BILLING_PROVIDER.

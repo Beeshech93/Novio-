@@ -19,5 +19,5 @@ export async function generateMetadata({ params }: { params: { host: string } })
 export default async function Sitio({ params }: { params: { host: string } }) {
   const site = await load(params.host);
   if (!site) notFound();
-  return <SiteRenderer site={site} />;
+  return <SiteRenderer site={site} host={params.host} />;
 }

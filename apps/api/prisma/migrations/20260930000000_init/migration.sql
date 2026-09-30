@@ -56,6 +56,7 @@ CREATE TABLE "businesses" (
     "address" TEXT,
     "email" TEXT,
     "goals" TEXT[],
+    "timezone" TEXT NOT NULL DEFAULT 'America/Mexico_City',
     "status" "BusinessStatus" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -288,9 +289,32 @@ CREATE TABLE "appointments" (
     "endAt" TIMESTAMP(3) NOT NULL,
     "status" "AppointmentStatus" NOT NULL DEFAULT 'pending',
     "notes" TEXT,
+    "source" TEXT NOT NULL DEFAULT 'internal',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "appointments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "business_hours" (
+    "id" UUID NOT NULL,
+    "businessId" UUID NOT NULL,
+    "weekday" INTEGER NOT NULL,
+    "openMin" INTEGER NOT NULL,
+    "closeMin" INTEGER NOT NULL,
+
+    CONSTRAINT "business_hours_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "blocked_dates" (
+    "id" UUID NOT NULL,
+    "businessId" UUID NOT NULL,
+    "employeeId" UUID,
+    "date" DATE NOT NULL,
+    "reason" TEXT,
+
+    CONSTRAINT "blocked_dates_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -491,6 +515,15 @@ CREATE INDEX "employees_businessId_idx" ON "employees"("businessId");
 CREATE INDEX "appointments_businessId_startAt_idx" ON "appointments"("businessId", "startAt");
 
 -- CreateIndex
+CREATE INDEX "appointments_employeeId_startAt_idx" ON "appointments"("employeeId", "startAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "business_hours_businessId_weekday_key" ON "business_hours"("businessId", "weekday");
+
+-- CreateIndex
+CREATE INDEX "blocked_dates_businessId_date_idx" ON "blocked_dates"("businessId", "date");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "website_templates_slug_key" ON "website_templates"("slug");
 
 -- CreateIndex
@@ -585,6 +618,12 @@ ALTER TABLE "appointments" ADD CONSTRAINT "appointments_employeeId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "appointments" ADD CONSTRAINT "appointments_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "services"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "business_hours" ADD CONSTRAINT "business_hours_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "blocked_dates" ADD CONSTRAINT "blocked_dates_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "websites" ADD CONSTRAINT "websites_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "businesses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
