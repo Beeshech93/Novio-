@@ -9,6 +9,10 @@ import { BusinessesController } from './businesses/businesses.controller';
 import { AuthGuard } from './common/auth.guard';
 import { RolesGuard } from './common/roles.guard';
 import { DashboardController } from './dashboard/dashboard.controller';
+import { CustomersController } from './customers/customers.controller';
+import { CustomersService } from './customers/customers.service';
+import { ProductsController } from './products/products.controller';
+import { ProductsService } from './products/products.service';
 import { PlansController } from './plans/plans.controller';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -26,9 +30,11 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController],
   providers: [
     AuthService,
+    ProductsService,
+    CustomersService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
