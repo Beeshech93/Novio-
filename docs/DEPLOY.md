@@ -18,8 +18,8 @@ Dos proyectos enlazados a este repo:
 | `nuvio-api` | `apps/api` | NestJS. |
 
 Variables del proyecto **nuvio-api** (Settings → Environment Variables): `DATABASE_URL`, `JWT_SECRET` (`openssl rand -hex 32`), `WEB_ORIGIN` (URL de la web), `TRUST_PROXY_HOPS` (default 1), `CRON_SECRET`, `TWOFA_ENCRYPTION_KEY`, y las de cada servicio externo (ver `.env.example`).
-Variables del proyecto **nuvio** (web): `API_ORIGIN=https://<url-de-nuvio-api>` (sin `/api/v1`) y `NEXT_PUBLIC_API_URL=/api/v1`. Redepliega la web después de cambiarlas.
-**Protección de despliegues:** `nuvio-api` nace con *Vercel Authentication* activada, lo que bloquea a la web (recibiría una página de login en vez de JSON). Desactívala para ese proyecto en Settings → Deployment Protection; la API ya se protege sola con JWT.
+Variables del proyecto **nuvio** (web): `API_ORIGIN=https://nuvio-api.vercel.app` (sin `/api/v1`) y `NEXT_PUBLIC_API_URL=/api/v1`. Redepliega la web después de cambiarlas.
+**Protección de despliegues:** en `nuvio-api` la URL de producción `https://nuvio-api.vercel.app` es pública (verificado: responde sin pedir login), pero las URLs por despliegue (`nuvio-api-wishebee.vercel.app`, previews) piden *Vercel Authentication*. Usa siempre `https://nuvio-api.vercel.app` como `API_ORIGIN`.
 
 ## 1. Base de datos
 1. Crea una base vacía y copia su `DATABASE_URL`.
