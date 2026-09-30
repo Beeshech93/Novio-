@@ -26,3 +26,13 @@ npm run dev:api   # http://localhost:4000/api/docs
 npm run dev:web   # http://localhost:3000
 npm test
 ```
+
+## Conexiones manuales (pendientes a propósito)
+Nada de esto está conectado; lo configura el administrador:
+1. **Base de datos**: define `DATABASE_URL` (una base propia de Nuvio), luego `npx prisma migrate deploy --schema apps/api/prisma/schema.prisma` y `npm run seed -w @nuvio/api`.
+2. **Administrador global**: define `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12+ caracteres) antes del seed. Accede a `/api/v1/admin/*` (métricas MRR/ARR/churn, negocios, planes editables, asignar suscripción a mano).
+3. **Cobros**: implementa `PaymentProvider` / `BillingProvider` (ver `payments/payment-provider.ts`, `subscriptions/billing-provider.ts`) para Stripe, Mercado Pago o Conekta, regístralo en `app.module.ts` y define `PAYMENT_PROVIDER` / `BILLING_PROVIDER` y sus secretos de webhook. Webhooks: `POST /api/v1/webhooks/payments/:provider` y `/webhooks/billing/:provider`. Mientras tanto, un admin puede activar planes con `POST /admin/businesses/:id/subscription`.
+4. **API en producción**: hosting para `apps/api` y `NEXT_PUBLIC_API_URL` en Vercel.
+
+## Fases
+1 Core ✅ · 2 Negocio ✅ · 3 Ventas ✅ · 4 Suscripciones ✅ (registro crea prueba de 14 días; funciones por plan validadas en backend con HTTP 402) · 5+ pendientes.

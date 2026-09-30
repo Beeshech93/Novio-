@@ -9,6 +9,8 @@ describe('AuthService', () => {
     businessMember: { create: jest.fn() },
     website: { create: jest.fn() },
     auditLog: { create: jest.fn() },
+    plan: { findFirst: jest.fn().mockResolvedValue({ id: 'plan1' }) },
+    subscription: { create: jest.fn() },
   };
   const prisma: any = {
     user: { findUnique: jest.fn(), findFirst: jest.fn() },
@@ -28,6 +30,7 @@ describe('AuthService', () => {
     expect(hash).not.toBe('secret123');
     expect(await bcrypt.compare('secret123', hash)).toBe(true);
     expect(tx.user.create.mock.calls[0][0].data.email).toBe('a@x.com');
+    expect(tx.subscription.create.mock.calls[0][0].data).toMatchObject({ businessId: 'b1', status: 'trialing', provider: 'trial' });
   });
 
   it('rejects duplicate email', async () => {

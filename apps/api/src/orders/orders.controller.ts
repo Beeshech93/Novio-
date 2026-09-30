@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { RequirePermission, Tenant } from '../common/decorators';
+import { RequireFeature, RequirePermission, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
 import { CreateOrderDto, ListOrdersQuery, UpdateStatusDto } from './orders.dto';
 import { OrdersService } from './orders.service';
 
+@RequireFeature('orders')
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {

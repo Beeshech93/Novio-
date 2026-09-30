@@ -5,6 +5,8 @@ import { AuthedRequest, TenantContext } from './tenant';
 export const ROLES_KEY = 'roles';
 export const PUBLIC_KEY = 'public';
 export const PERMISSION_KEY = 'permission';
+export const FEATURE_KEY = 'feature';
+export const RequireFeature = (f: string) => SetMetadata(FEATURE_KEY, f);
 export const PLATFORM_ADMIN_KEY = 'platformAdmin';
 
 export const Roles = (...roles: MemberRole[]) => SetMetadata(ROLES_KEY, roles);

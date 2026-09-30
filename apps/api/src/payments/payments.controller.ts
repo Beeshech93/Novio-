@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
-import { Public, RequirePermission, Tenant } from '../common/decorators';
+import { Public, RequireFeature, RequirePermission, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
 import { PaymentsService } from './payments.service';
 
@@ -11,6 +11,7 @@ class CreatePaymentDto {
 }
 class ListPaymentsQuery { @IsOptional() @IsUUID() orderId?: string }
 
+@RequireFeature('orders')
 @ApiTags('payments')
 @Controller()
 export class PaymentsController {

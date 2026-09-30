@@ -3,6 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AdminController } from './admin/admin.controller';
+import { FeatureGuard } from './common/feature.guard';
+import { BILLING_PROVIDERS, BillingProvider } from './subscriptions/billing-provider';
+import { MockBillingProvider } from './subscriptions/mock-billing.provider';
+import { SubscriptionsController } from './subscriptions/subscriptions.controller';
+import { SubscriptionsService } from './subscriptions/subscriptions.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -36,13 +42,23 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController],
   providers: [
     AuthService,
     ProductsService,
     CustomersService,
     OrdersService,
     PaymentsService,
+    SubscriptionsService,
+    {
+      provide: BILLING_PROVIDERS,
+      // Connect a real billing processor here (Stripe / Mercado Pago / Conekta) and set BILLING_PROVIDER.
+      useFactory: () => {
+        const providers = new Map<string, BillingProvider>();
+        if (process.env.NODE_ENV !== 'production') providers.set('mock', new MockBillingProvider(process.env.BILLING_WEBHOOK_SECRET ?? 'dev-only-secret'));
+        return providers;
+      },
+    },
     {
       provide: PAYMENT_PROVIDERS,
       // Real processors get registered here. The mock (dev/test only) is never available in production.
@@ -57,6 +73,7 @@ import { PrismaModule } from './prisma/prisma.module';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: FeatureGuard },
   ],
 })
 export class AppModule {}

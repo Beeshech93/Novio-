@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { RequirePermission, Tenant } from '../common/decorators';
+import { RequireFeature, RequirePermission, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
 import { CustomerDto, ListCustomersQuery, UpdateCustomerDto } from './customers.dto';
 import { CustomersService } from './customers.service';
 
+@RequireFeature('customers')
 @ApiTags('customers')
 @Controller('customers')
 export class CustomersController {

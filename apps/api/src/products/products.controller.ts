@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Header, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { RequirePermission, Tenant } from '../common/decorators';
+import { RequireFeature, RequirePermission, Tenant } from '../common/decorators';
 import { TenantContext } from '../common/tenant';
 import { CategoryDto, ImportCsvDto, ListProductsQuery, ProductDto, UpdateProductDto } from './products.dto';
 import { ProductsService } from './products.service';
 
+@RequireFeature('products')
 @ApiTags('products')
 @Controller()
 export class ProductsController {

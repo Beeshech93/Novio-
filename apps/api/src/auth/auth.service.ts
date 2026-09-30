@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/slug';
+import { TRIAL_DAYS } from '../subscriptions/access';
 import { LoginDto, RegisterDto } from './auth.dto';
 
 @Injectable()
@@ -26,6 +27,14 @@ export class AuthService {
       });
       await tx.businessMember.create({ data: { businessId: business.id, userId: user.id, role: 'OWNER' } });
       await tx.website.create({ data: { businessId: business.id, subdomain: slug } });
+      // 14-day trial of the entry plan (skipped if plans haven't been seeded yet).
+      const plan = await tx.plan.findFirst({ where: { slug: 'basico', billingInterval: 'MONTHLY', active: true } });
+      if (plan) {
+        const now = new Date();
+        await tx.subscription.create({
+          data: { businessId: business.id, planId: plan.id, provider: 'trial', status: 'trialing', billingInterval: 'MONTHLY', currentPeriodStart: now, currentPeriodEnd: new Date(now.getTime() + TRIAL_DAYS * 86_400_000) },
+        });
+      }
       await tx.auditLog.create({
         data: { businessId: business.id, userId: user.id, action: 'business.created', entity: 'business', entityId: business.id },
       });
