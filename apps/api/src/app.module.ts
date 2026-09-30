@@ -21,6 +21,9 @@ import { AnalyticsService } from './analytics/analytics.service';
 import { AutomationsService } from './automations/automations.service';
 import { MarketingController } from './marketing/marketing.controller';
 import { MarketingService } from './marketing/marketing.service';
+import { AiController } from './ai/ai.controller';
+import { AiService } from './ai/ai.service';
+import { AI_GENERATOR, AnthropicGenerator } from './ai/generator';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { BusinessesController } from './businesses/businesses.controller';
@@ -54,7 +57,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController],
+  controllers: [AuthController, BusinessesController, PlansController, DashboardController, ProductsController, CustomersController, OrdersController, PaymentsController, SubscriptionsController, AdminController, WebsitesController, AppointmentsController, NotificationsController, MarketingController, AnalyticsController, AiController],
   providers: [
     AuthService,
     ProductsService,
@@ -68,6 +71,14 @@ import { PrismaModule } from './prisma/prisma.module';
     MarketingService,
     AutomationsService,
     AnalyticsService,
+    AiService,
+    {
+      provide: AI_GENERATOR,
+      // Connect by setting ANTHROPIC_API_KEY. AI_MODEL overrides the default fast/cheap model.
+      useFactory: () => process.env.ANTHROPIC_API_KEY
+        ? new AnthropicGenerator(process.env.ANTHROPIC_API_KEY, process.env.AI_MODEL ?? 'claude-haiku-4-5-20251001')
+        : undefined,
+    },
     {
       provide: EMAIL_PROVIDER,
       // Connect by setting RESEND_API_KEY + EMAIL_FROM. In development, falls back to logging.
