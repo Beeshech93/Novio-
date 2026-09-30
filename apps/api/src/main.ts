@@ -7,6 +7,8 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  // Behind Vercel/Render the socket IP is the proxy's. Set TRUST_PROXY_HOPS to the number of proxies in front (default 1).
+  (app.getHttpAdapter().getInstance() as import('express').Express).set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
   app.use(helmet());
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
