@@ -17,7 +17,9 @@ Dos proyectos enlazados a este repo:
 | `nuvio` | `apps/web` | Next.js. Llama a la API por **el mismo dominio**: `/api/v1/*` se reenvía a la API con un rewrite (así la cookie de sesión es propia y no hay CORS). |
 | `nuvio-api` | `apps/api` | NestJS. |
 
-Variables del proyecto **nuvio-api** (Settings → Environment Variables): `DATABASE_URL`, `JWT_SECRET` (`openssl rand -hex 32`), `WEB_ORIGIN` (URL de la web), `TRUST_PROXY_HOPS` (default 1), `CRON_SECRET`, `TWOFA_ENCRYPTION_KEY`, y las de cada servicio externo (ver `.env.example`).
+Base de datos: conecta **Neon** (o Supabase) al proyecto `nuvio-api` desde Storage; la integración inyecta `DATABASE_URL` y `DATABASE_URL_UNPOOLED`. En cada build de **producción**, `apps/api/scripts/vercel-build.sh` aplica las migraciones y carga los planes con la conexión directa (los previews no tocan la base).
+Sesiones: si no defines `JWT_SECRET`, la API genera una clave fuerte en el primer arranque y la guarda en la tabla `app_secrets` (protegida con RLS). Definir `JWT_SECRET` tiene prioridad; `ALLOW_GENERATED_JWT_SECRET=0` lo vuelve obligatorio.
+Variables del proyecto **nuvio-api** (Settings → Environment Variables): `WEB_ORIGIN` (URL de la web), `TRUST_PROXY_HOPS` (default 1), `CRON_SECRET`, `TWOFA_ENCRYPTION_KEY`, y las de cada servicio externo (ver `.env.example`).
 Variables del proyecto **nuvio** (web): `API_ORIGIN=https://nuvio-api.vercel.app` (sin `/api/v1`) y `NEXT_PUBLIC_API_URL=/api/v1`. Redepliega la web después de cambiarlas.
 **Protección de despliegues:** en `nuvio-api` la URL de producción `https://nuvio-api.vercel.app` es pública (verificado: responde sin pedir login), pero las URLs por despliegue (`nuvio-api-wishebee.vercel.app`, previews) piden *Vercel Authentication*. Usa siempre `https://nuvio-api.vercel.app` como `API_ORIGIN`.
 

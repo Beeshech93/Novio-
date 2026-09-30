@@ -638,3 +638,12 @@ model AuthToken {
   @@index([userId, kind])
   @@map("auth_tokens")
 }
+
+/// Server-generated secrets (e.g. the session-signing key when JWT_SECRET isn't provided by the environment).
+model AppSecret {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+
+  @@map("app_secrets")
+}

@@ -45,7 +45,9 @@ import { MockPaymentProvider } from './payments/mock.provider';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { PlansController } from './plans/plans.controller';
+import { resolveJwtSecret } from './common/jwt-secret';
 import { PrismaModule } from './prisma/prisma.module';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
@@ -53,11 +55,11 @@ import { PrismaModule } from './prisma/prisma.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     JwtModule.registerAsync({
       global: true,
-      useFactory: () => {
-        const secret = process.env.JWT_SECRET;
-        if (!secret || secret.length < 16) throw new Error('JWT_SECRET must be set (16+ chars)');
-        return { secret, signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' } };
-      },
+      inject: [PrismaService],
+      useFactory: async (prisma: PrismaService) => ({
+        secret: await resolveJwtSecret(prisma),
+        signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' },
+      }),
     }),
     PrismaModule,
   ],
